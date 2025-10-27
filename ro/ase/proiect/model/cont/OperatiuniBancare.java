@@ -1,13 +1,14 @@
 package ro.ase.proiect.model.cont;
 
 import ro.ase.proiect.exceptii.ExceptieFonduriInsuficiente;
+import ro.ase.proiect.exceptii.ExceptieRetragereZilnicaDepasita;
 
 /**
  *Interfata are scopul de a defini principalele operatiuni financiare.
  *
  * @author Matei Maria-Bianca
- * @version 1.0
- * @since 26.10.2025
+ * @version 1.1
+ * @since 27.10.2025
  * @see ContCreditor
  * @see ContDebitor
  */
@@ -23,11 +24,11 @@ public interface OperatiuniBancare {
      * @param suma Reprezinta suma ce trebuie retrasa.
      * @throws ExceptieFonduriInsuficiente daca suma depaseste soldul.
      */
-   void retragere(double suma) throws ExceptieFonduriInsuficiente;
+   void retragere(double suma) throws ExceptieFonduriInsuficiente, ExceptieRetragereZilnicaDepasita;
 
     /**
      * Returneaza suma ce sta la dispozitia utilizatorului
      * @return soldul/creditul disponibil
      */
-   double getSold();
+   double getSoldDisponibil();
 }
