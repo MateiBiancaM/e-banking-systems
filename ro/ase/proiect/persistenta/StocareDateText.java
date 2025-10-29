@@ -16,8 +16,8 @@ import java.util.Map;
  *Implementarea concreta a interfetei {@link StocareDate} ce se ocupa de gestionarea datelor in fisiere text.
  *
  * @author Matei Maria-Bianca
- * @version 1.0
- * @since 26.10.2025
+ * @version 1.1
+ * @since 29.10.2025
  */
 public class StocareDateText implements StocareDate{
     private String caleFisierClienti;
