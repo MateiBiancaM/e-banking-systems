@@ -37,4 +37,8 @@ public abstract class ContBancar extends Cont implements OperatiuniBancare {
     public double getSold() {
         return this.sold;
     }
+
+    public void setSold(double sold) {
+        this.sold = sold;
+    }
 }

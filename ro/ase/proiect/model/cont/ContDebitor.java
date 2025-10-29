@@ -11,8 +11,8 @@ import java.time.LocalDate;
  * Soldul constituie banii clientului, reprezentand o valoare pozitiva, ce nu are voie sa scada sub 0.
  *
  * @author Matei Maria-Bianca
- * @version 1.2
- * @since 27.10.2025
+ * @version 1.3
+ * @since 29.10.2025
  * @see ContBancar
  * @see ro.ase.proiect.exceptii.ExceptieFonduriInsuficiente
  */
@@ -57,4 +57,18 @@ public final class ContDebitor extends ContBancar {
     public double getSold() {
         return this.sold;
     }
+
+    public double getTotalRetrasAstazi() {
+        return totalRetrasAstazi;
+    }
+
+    public LocalDate getDataUltimeiRetrageri() {
+        return dataUltimeiRetrageri;
+    }
+
+    public void setStareZilnica(double totalRetrasAstazi,LocalDate dataUltimeiRetrageri) {
+        this.totalRetrasAstazi = totalRetrasAstazi;
+        this.dataUltimeiRetrageri = dataUltimeiRetrageri;
+    }
+
 }

@@ -8,15 +8,16 @@ import ro.ase.proiect.model.utilizator.Client;
  * Soldul reprezinta banii bancii, reprezentand o valoare negativa ce reprezinta datoria clientului fata de banca.
  *
  * @author Matei Maria-Bianca
- * @version 1.1
- * @since 27.10.2025
+ * @version 1.2
+ * @since 29.10.2025
  * @see ContBancar
  */
 public final class ContCreditor extends ContBancar {
-    private static final double LIMITA_CREDIT=10000;
+    private double limitaCredit;
 
-    public ContCreditor(String iban, Client client, TipMoneda moneda) {
+    public ContCreditor(String iban, Client client, TipMoneda moneda, double limitaCredit) {
         super(iban, client, moneda);
+        this.limitaCredit = limitaCredit;
     }
 
     @Override
@@ -33,7 +34,7 @@ public final class ContCreditor extends ContBancar {
 
     @Override
     public double getSoldDisponibil() {
-        return LIMITA_CREDIT+this.sold;
+        return this.limitaCredit+this.sold;
     }
 
     @Override
@@ -43,6 +44,10 @@ public final class ContCreditor extends ContBancar {
 
     public double getDatorieCurenta(){
         return -1*this.sold;
+    }
+
+    public double getLimitaCredit() {
+        return this.limitaCredit;
     }
 
 

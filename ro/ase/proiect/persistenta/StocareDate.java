@@ -23,7 +23,7 @@ public interface StocareDate {
     List<Tranzactie> incarcaTranzactii() throws ExceptieDateInvalide;
 
     void salveazaClienti(Map<String,Client> clienti);
-    void salveazaCConturi(Map<String,Cont> conturi);
+    void salveazaConturi(Map<String,Cont> conturi);
     void salveazaTranzactii(List<Tranzactie> tranzactii);
 
 }

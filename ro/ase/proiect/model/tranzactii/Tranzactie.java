@@ -12,15 +12,15 @@ import java.util.Objects;
  * @since 27.10.2025
  */
 public final class Tranzactie {
-    private final String idTranzactue;
+    private final String idTranzactie;
     private final LocalDate data;
     private final String tipTransfer;
     private final double suma;
     private final String ibanSursa;
     private final String ibanDestinatie;
 
-    public Tranzactie(String idTranzactue, LocalDate data, String tipTransfer, double suma, String ibanSursa, String ibanDestinatie) {
-        this.idTranzactue = idTranzactue;
+    public Tranzactie(String idTranzactie, LocalDate data, String tipTransfer, double suma, String ibanSursa, String ibanDestinatie) {
+        this.idTranzactie = idTranzactie;
         this.data = data;
         this.tipTransfer = tipTransfer;
         this.suma = suma;
@@ -28,8 +28,8 @@ public final class Tranzactie {
         this.ibanDestinatie = ibanDestinatie;
     }
 
-    public String getIdTranzactue() {
-        return idTranzactue;
+    public String getIdTranzactie() {
+        return idTranzactie;
     }
 
     public LocalDate getData() {
@@ -56,18 +56,18 @@ public final class Tranzactie {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Tranzactie that = (Tranzactie) o;
-        return Double.compare(suma, that.suma) == 0 && Objects.equals(idTranzactue, that.idTranzactue) && Objects.equals(data, that.data) && Objects.equals(tipTransfer, that.tipTransfer) && Objects.equals(ibanSursa, that.ibanSursa) && Objects.equals(ibanDestinatie, that.ibanDestinatie);
+        return Double.compare(suma, that.suma) == 0 && Objects.equals(idTranzactie, that.idTranzactie) && Objects.equals(data, that.data) && Objects.equals(tipTransfer, that.tipTransfer) && Objects.equals(ibanSursa, that.ibanSursa) && Objects.equals(ibanDestinatie, that.ibanDestinatie);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(idTranzactue, data, tipTransfer, suma, ibanSursa, ibanDestinatie);
+        return Objects.hash(idTranzactie, data, tipTransfer, suma, ibanSursa, ibanDestinatie);
     }
 
     @Override
     public String toString() {
         return "Tranzactie{" +
-                "idTranzactue='" + idTranzactue + '\'' +
+                "idTranzactue='" + idTranzactie + '\'' +
                 ", data=" + data +
                 ", tipTransfer='" + tipTransfer + '\'' +
                 ", suma=" + suma +
