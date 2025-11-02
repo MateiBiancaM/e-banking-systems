@@ -28,7 +28,6 @@ public abstract class ContBancar extends Cont implements OperatiuniBancare {
     public void depunere(double suma) {
         if (suma > 0) {
             this.sold += suma;
-            System.out.println("-->Suma depusa:" + suma + ". Sold nou:" + this.sold);
         } else {
             throw new IllegalArgumentException("Suma depusa trebuie sa fie pozitiva!");
         }

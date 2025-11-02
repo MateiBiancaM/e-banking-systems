@@ -29,7 +29,6 @@ public final class ContCreditor extends ContBancar {
             throw new ExceptieFonduriInsuficiente("Credit insuficient! Creditul disponibil este:"+this.getSoldDisponibil()+ " Suma dorita:"+suma);
         }
         this.sold-=suma;
-        System.out.println("-->Suma cheltuita din contul de credit:"+suma+". Datoria curenta:"+this.getDatorieCurenta()+". Creditul disponibil este:"+this.getSoldDisponibil()+".");
     }
 
     @Override

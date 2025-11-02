@@ -16,8 +16,8 @@ import java.util.Map;
  *Implementarea concreta a interfetei {@link StocareDate} ce se ocupa de gestionarea datelor in fisiere text.
  *
  * @author Matei Maria-Bianca
- * @version 1.1
- * @since 29.10.2025
+ * @version 1.2
+ * @since 31.10.2025
  */
 public class StocareDateText implements StocareDate{
     private String caleFisierClienti;
@@ -66,7 +66,7 @@ public class StocareDateText implements StocareDate{
             System.out.println("Fisierul:"+caleFisierConturi+", nu a fost gasit! Numar conturi:0!");
             return conturiIncarcate;
         }
-
+        LocalDate dataCurenta=LocalDate.now();
         try (BufferedReader br = new BufferedReader(new FileReader(fisier))) {
             String linie;
             while((linie=br.readLine())!=null){
@@ -115,7 +115,12 @@ public class StocareDateText implements StocareDate{
                         }
                         cont = new ContDebitor(ibanDebit, proprietarDebit, monedaDebit);
                         cont.setSold(soldDebit);
-                        ((ContDebitor) cont).setStareZilnica(totalRetras, dataRetragere);
+                        if(dataCurenta.equals(dataRetragere)){
+                            ((ContDebitor) cont).setStareZilnica(totalRetras, dataRetragere);
+                        }else{
+                            ((ContDebitor) cont).setStareZilnica(0.0, dataCurenta);
+                        }
+
                         break;
                     default:
                         throw new ExceptieDateInvalide("Tip cont necunoscut:" + tipCont);

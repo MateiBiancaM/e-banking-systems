@@ -45,7 +45,6 @@ public final class ContDebitor extends ContBancar {
         this.sold-=suma;
         this.totalRetrasAstazi+=suma;
         this.dataUltimeiRetrageri=dataCurenta;
-        System.out.println("-->Suma retrasa din contul de debit:"+suma+". Sold:"+this.sold+". Total retras astazi:"+this.totalRetrasAstazi+".");
     }
 
     @Override
