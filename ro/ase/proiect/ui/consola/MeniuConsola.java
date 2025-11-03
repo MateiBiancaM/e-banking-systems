@@ -1,11 +1,10 @@
 package ro.ase.proiect.ui.consola;
 
 import ro.ase.proiect.exceptii.*;
-import ro.ase.proiect.model.cont.Cont;
-import ro.ase.proiect.model.cont.ContCreditor;
-import ro.ase.proiect.model.cont.ContDebitor;
+import ro.ase.proiect.model.cont.*;
 import ro.ase.proiect.model.utilizator.Client;
 import ro.ase.proiect.servicii.SistemBancarService;
+import ro.ase.proiect.ui.gui.FereastraRaport;
 
 import java.util.InputMismatchException;
 import java.util.List;
@@ -16,8 +15,8 @@ import java.util.Scanner;
  * fi delegate catre SistemBancarService
  *
  * @author Matei Maria-Bianca
- * @version 1.1
- * @since 2.11.2025
+ * @version 1.2
+ * @since 3.11.2025
  * @see SistemBancarService
  */
 public class MeniuConsola {
@@ -77,6 +76,12 @@ public class MeniuConsola {
                     case 4:
                         gestioneazaAfisareConturiClient();
                         break;
+                    case 5:
+                        gestioneazaDeschidereCont();
+                        break;
+                    case 6:
+                        gestioneazaRaportActivitate();
+                        break;
                     case 0:
                         ruleaza = false;
                         System.out.println("La revedere!");
@@ -116,11 +121,11 @@ public class MeniuConsola {
         System.out.println("2. Efectuează o retragere");
         System.out.println("3. Efectuează un transfer");
         System.out.println("4. Vizualizează conturile");
-        System.out.println("0. Ieșire");
+        System.out.println("5. Deschide cont nou");
+        System.out.println("6. Vizualizeaza raportul de activitate");
+        System.out.println("0. Deconectare");
         System.out.print("Alegeți opțiunea: ");
     }
-
-
 
     private void gestioneazaAutentificare() throws ExceptieAutentificareEsuata, ExceptieClientInexistent {
         System.out.print("Introduceți Numele de familie: ");
@@ -192,6 +197,59 @@ public class MeniuConsola {
                 System.out.println("Datorie curenta:"+contCreditor.getDatorieCurenta());
 
             }
+        }
+    }
+
+    private void gestioneazaDeschidereCont(){
+        System.out.println("Deschidere cont nou");
+        System.out.println("Ce tip de cont doriti sa deschideti?");
+        System.out.println("1. Cont debit");
+        System.out.println("2. Cont credit");
+        TipCont tipCont;
+        int optiuneTip=citesteOptiune();
+        if(optiuneTip==1){
+            tipCont=TipCont.DEBIT;
+        }else if(optiuneTip==2){
+            tipCont=TipCont.CREDIT;
+        }else{
+            System.err.println("Optiune invalida");
+            return;
+        }
+        System.out.println("Alegeti moneda:");
+        System.out.println("1. RON");
+        System.out.println("2. EUR");
+        System.out.println("3. USD");
+        TipMoneda tipMoneda;
+        int optiuneMoneda=citesteOptiune();
+        switch (optiuneMoneda){
+            case 1:
+                tipMoneda=TipMoneda.RON;
+                break;
+            case 2:
+                tipMoneda=TipMoneda.EUR;
+                break;
+            case 3:
+                tipMoneda=TipMoneda.USD;
+                break;
+            default:
+                System.err.println("Optiune invalida");
+                return;
+        }
+        sistemBancarService.creazaContNou(this.clientAutentificat,tipCont,tipMoneda);
+    }
+
+    private void gestioneazaRaportActivitate(){
+        System.out.println("Raport activitate pentru:"+clientAutentificat.getNume()+" "+clientAutentificat.getPrenume());
+        double[][] statistici= sistemBancarService.genereazaStatisticiClient(this.clientAutentificat);
+        System.out.println("Operatiuni ( Total suma | Numar operatiuni ) ");
+        System.out.printf("Depuneri:            %.2f | %.0f\n",statistici[0][0],statistici[0][1]);
+        System.out.printf("Retrageri:           %.2f | %.0f\n",statistici[1][0],statistici[1][1]);
+        System.out.printf("Transferuri Trimise: %.2f | %.0f\n",statistici[2][0],statistici[2][1]);
+        System.out.printf("Transferuri Primite: %.2f | %.0f\n",statistici[3][0],statistici[3][1]);
+        System.out.println("\nDoriti sa deschideti fereastra grafica a raportului?(1=DA, 0=NU)");
+        int opt=citesteOptiune();
+        if(opt==1){
+            new FereastraRaport(statistici,clientAutentificat.getNume(),clientAutentificat.getPrenume());
         }
     }
 

@@ -1,8 +1,7 @@
 package ro.ase.proiect.servicii;
 
 import ro.ase.proiect.exceptii.*;
-import ro.ase.proiect.model.cont.Cont;
-import ro.ase.proiect.model.cont.ContBancar;
+import ro.ase.proiect.model.cont.*;
 import ro.ase.proiect.model.tranzactii.Tranzactie;
 import ro.ase.proiect.model.utilizator.Client;
 import ro.ase.proiect.persistenta.StocareDate;
@@ -14,14 +13,15 @@ import java.util.*;
  *Clasa care gestioneaza operatiuniile si starea aplicatiei in memorie
  *
  * @author Matei Maria-Bianca
- * @version 1.3
- * @since 02.11.2025
+ * @version 1.4
+ * @since 03.11.2025
  * @see StocareDate
  * @see Cont
  * @see Client
  * @see Tranzactie
  */
 public class SistemBancarService {
+    private static final double LIMITA_STANDARD_CREDIT=10000;
     private Map<String, Client> clienti;
     private Map<String, Cont> conturi;
     private List<Tranzactie> istoricTranzactii;
@@ -171,5 +171,73 @@ public class SistemBancarService {
             }
         }
         return conturiGasite;
+    }
+
+    public Cont creazaContNou(Client client, TipCont tip, TipMoneda moneda){
+        String ibanNou= genereazaIbanUnic();
+        Cont contNou;
+        if(tip==TipCont.DEBIT){
+            contNou=new ContDebitor(ibanNou,client,moneda);
+        }else {
+            contNou=new ContCreditor(ibanNou,client,moneda,LIMITA_STANDARD_CREDIT);
+        }
+        conturi.put(ibanNou,contNou);
+        System.out.println("Cont "+tip+" creat cu succes!");
+        return contNou;
+    }
+
+    private String genereazaIbanUnic() {
+        String iban;
+        do{
+            long numeric=System.currentTimeMillis()%1000+(long)(Math.random()*100000);
+            iban="RO"+String.format("%02d",(conturi.size()+1))+"BANK"+String.format("%02d",numeric);
+        }while (conturi.containsKey(iban));
+        return iban;
+    }
+
+    /**
+     * Metoda va genera o matrice de statistici pentru clientul autentificat.
+     *
+     * @param clientAutentificat clientul pemtru care se genereaza raportul
+     * @return o matrice double[4][2] unde:
+     * [0][0]= suma totala depuneri, [0][1]=numar depuneri
+     * [1][0]= suma totala retrageri, [1][1]=numar retrageri
+     * [2][0]= suma totala transferuri trimise, [2][1]=numar transferuri trimise
+     * [3][0]= suma totala transferuri primite, [3][1]=numar transferuri primite
+     */
+    public double[][] genereazaStatisticiClient(Client clientAutentificat){
+        double[][] statisticiClient=new double[4][2];
+        List<Cont> conturileMele;
+        try{
+            conturileMele=this.getConturiByClientId(clientAutentificat.getClientId());
+        } catch (ExceptieClientInexistent e) {
+            return statisticiClient;
+        }
+        Set<String> ibanurileMele=new HashSet<>();
+        for(Cont cont:conturileMele){
+            ibanurileMele.add(cont.getIban());
+        }
+        for(Tranzactie t: istoricTranzactii){
+            String ibanSursa=t.getIbanSursa();
+            String ibanDestinatie=t.getIbanDestinatie();
+            if(t.getTipTransfer().equals("Depunere")&& ibanurileMele.contains(ibanDestinatie)){
+                statisticiClient[0][0]+=t.getSuma();
+                statisticiClient[0][1]++;
+            } else if(t.getTipTransfer().equals("Retragere")&& ibanurileMele.contains(ibanSursa)){
+                statisticiClient[1][0]+=t.getSuma();
+                statisticiClient[1][1]++;
+            } else if(t.getTipTransfer().equals("Transfer")){
+                boolean sursaMea=ibanurileMele.contains(ibanSursa);
+                boolean destinatiaMea=ibanurileMele.contains(ibanDestinatie);
+                if(sursaMea&&!destinatiaMea){
+                    statisticiClient[2][0]+=t.getSuma();
+                    statisticiClient[2][1]++;
+                } else if(!sursaMea&&destinatiaMea){
+                    statisticiClient[3][0]+=t.getSuma();
+                    statisticiClient[3][1]++;
+                }
+            }
+        }
+        return statisticiClient;
     }
 }
