@@ -13,8 +13,8 @@ import java.util.*;
  *Clasa care gestioneaza operatiuniile si starea aplicatiei in memorie
  *
  * @author Matei Maria-Bianca
- * @version 1.4
- * @since 03.11.2025
+ * @version 1.5
+ * @since 04.11.2025
  * @see StocareDate
  * @see Cont
  * @see Client
@@ -24,7 +24,7 @@ public class SistemBancarService {
     private static final double LIMITA_STANDARD_CREDIT=10000;
     private Map<String, Client> clienti;
     private Map<String, Cont> conturi;
-    private List<Tranzactie> istoricTranzactii;
+    private SortedSet<Tranzactie> istoricTranzactii;
     private StocareDate managerStocare;
 
     /**
@@ -35,7 +35,7 @@ public class SistemBancarService {
         this.managerStocare = managerStocare;
         this.clienti = new HashMap<>();
         this.conturi = new HashMap<>();
-        this.istoricTranzactii = new ArrayList<>();
+        this.istoricTranzactii = new TreeSet<>();
     }
 
     /**
@@ -43,14 +43,9 @@ public class SistemBancarService {
      * Este apelata la pornirea aplicatiei
      */
     public void incarcareDate() throws ExceptieDateInvalide {
-        try{
-            this.clienti=managerStocare.incarcaClienti();
-            this.conturi=managerStocare.incarcaConturi(this.clienti);
-            this.istoricTranzactii=managerStocare.incarcaTranzactii();
-            System.out.println("-->Datele au fost incarcate cu succes!");
-        }catch (ExceptieDateInvalide e){
-            throw new ExceptieDateInvalide("Eroare la incarcarea datelor:"+e.getMessage());
-        }
+        this.clienti=managerStocare.incarcaClienti();
+        this.conturi=managerStocare.incarcaConturi(this.clienti);
+        this.istoricTranzactii= (SortedSet<Tranzactie>) managerStocare.incarcaTranzactii();
     }
     /**
      * Metoda apeleaza menegerul de stocare a datelor pentru a salva datele din colectiile din memorie in fisiere
@@ -61,13 +56,12 @@ public class SistemBancarService {
             managerStocare.salveazaClienti(this.clienti);
             managerStocare.salveazaConturi(this.conturi);
             managerStocare.salveazaTranzactii(this.istoricTranzactii);
-            System.out.println("-->Datele au fost salvate cu succes!");
         } catch (Exception e) {
             throw new RuntimeException("Eroare la incarcarea datelor:"+e.getMessage());
         }
     }
 
-    public void efectueazaDepunere(String ibanDestinatie, double suma) throws ExceptieContInexistent {
+    public void efectueazaDepunere(String ibanDestinatie, double suma) throws ExceptieContInexistent, ExceptieLimitaDepunereDepasita, ExceptieOperatiuneInvalida {
         ContBancar cont= (ContBancar) conturi.get(ibanDestinatie);
         if(cont==null){
             throw new ExceptieContInexistent("Contul:"+ibanDestinatie+" nu a fost gasit!");
@@ -100,7 +94,7 @@ public class SistemBancarService {
         this.istoricTranzactii.add(t);
     }
 
-    public void efecteazaTransfer(Client clientAutentificat, String ibanSursa, String ibanDestinatie, double suma) throws ExceptieContInexistent, ExceptieRetragereZilnicaDepasita, ExceptieFonduriInsuficiente, ExceptiePermisiuneRespinsa {
+    public void efecteazaTransfer(Client clientAutentificat, String ibanSursa, String ibanDestinatie, double suma) throws ExceptieContInexistent, ExceptieRetragereZilnicaDepasita, ExceptieFonduriInsuficiente, ExceptiePermisiuneRespinsa, ExceptieLimitaDepunereDepasita, ExceptieTransferInvalid, ExceptieOperatiuneInvalida {
         ContBancar contSursa= (ContBancar) conturi.get(ibanSursa);
         ContBancar contDestinatie= (ContBancar) conturi.get(ibanDestinatie);
         if(contSursa==null){
@@ -111,6 +105,12 @@ public class SistemBancarService {
         }
         if(!contSursa.getClient().getClientId().equals(clientAutentificat.getClientId())){
             throw new ExceptiePermisiuneRespinsa("Acces refuzat! Contul sursa nu va apartine!");
+        }
+        if (contSursa.getMoneda() != contDestinatie.getMoneda()) {
+            throw new ExceptieTransferInvalid(
+                    "Transferurile între monede diferite (" + contSursa.getMoneda() +
+                            " -> " + contDestinatie.getMoneda() + ") nu sunt permise de bancă."
+            );
         }
         contSursa.retragere(suma);
         try{
@@ -205,39 +205,36 @@ public class SistemBancarService {
      * [2][0]= suma totala transferuri trimise, [2][1]=numar transferuri trimise
      * [3][0]= suma totala transferuri primite, [3][1]=numar transferuri primite
      */
-    public double[][] genereazaStatisticiClient(Client clientAutentificat){
-        double[][] statisticiClient=new double[4][2];
-        List<Cont> conturileMele;
-        try{
-            conturileMele=this.getConturiByClientId(clientAutentificat.getClientId());
-        } catch (ExceptieClientInexistent e) {
-            return statisticiClient;
+    public double[][] genereazaStatisticiContClient(Client clientAutentificat, String ibanSelectat) throws ExceptieContInexistent, ExceptiePermisiuneRespinsa {
+        Cont cont=conturi.get(ibanSelectat);
+        if(cont==null){
+            throw new ExceptieContInexistent("Contul "+ibanSelectat+" nu exista!");
         }
-        Set<String> ibanurileMele=new HashSet<>();
-        for(Cont cont:conturileMele){
-            ibanurileMele.add(cont.getIban());
+        if(!cont.getClient().getClientId().equals(clientAutentificat.getClientId())){
+            throw  new ExceptiePermisiuneRespinsa("Acces refuzat! Contul "+ ibanSelectat+ "nu va apartine!");
         }
+
+        double[][] statisticiContClient=new double[4][2];
+
         for(Tranzactie t: istoricTranzactii){
             String ibanSursa=t.getIbanSursa();
             String ibanDestinatie=t.getIbanDestinatie();
-            if(t.getTipTransfer().equals("Depunere")&& ibanurileMele.contains(ibanDestinatie)){
-                statisticiClient[0][0]+=t.getSuma();
-                statisticiClient[0][1]++;
-            } else if(t.getTipTransfer().equals("Retragere")&& ibanurileMele.contains(ibanSursa)){
-                statisticiClient[1][0]+=t.getSuma();
-                statisticiClient[1][1]++;
+            if(t.getTipTransfer().equals("Depunere")&& ibanSelectat.contains(ibanDestinatie)){
+                statisticiContClient[0][0]+=t.getSuma();
+                statisticiContClient[0][1]++;
+            } else if(t.getTipTransfer().equals("Retragere")&& ibanSelectat.contains(ibanSursa)){
+                statisticiContClient[1][0]+=t.getSuma();
+                statisticiContClient[1][1]++;
             } else if(t.getTipTransfer().equals("Transfer")){
-                boolean sursaMea=ibanurileMele.contains(ibanSursa);
-                boolean destinatiaMea=ibanurileMele.contains(ibanDestinatie);
-                if(sursaMea&&!destinatiaMea){
-                    statisticiClient[2][0]+=t.getSuma();
-                    statisticiClient[2][1]++;
-                } else if(!sursaMea&&destinatiaMea){
-                    statisticiClient[3][0]+=t.getSuma();
-                    statisticiClient[3][1]++;
+                if(ibanSelectat.equals(ibanSursa)){
+                    statisticiContClient[2][0]+=t.getSuma();
+                    statisticiContClient[2][1]++;
+                } else if(ibanSelectat.equals(ibanDestinatie)){
+                    statisticiContClient[3][0]+=t.getSuma();
+                    statisticiContClient[3][1]++;
                 }
             }
         }
-        return statisticiClient;
+        return statisticiContClient;
     }
 }

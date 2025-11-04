@@ -1,6 +1,8 @@
 package ro.ase.proiect.model.cont;
 
 import ro.ase.proiect.exceptii.ExceptieFonduriInsuficiente;
+import ro.ase.proiect.exceptii.ExceptieLimitaDepunereDepasita;
+import ro.ase.proiect.exceptii.ExceptieOperatiuneInvalida;
 import ro.ase.proiect.model.utilizator.Client;
 
 /**
@@ -8,8 +10,8 @@ import ro.ase.proiect.model.utilizator.Client;
  * Soldul reprezinta banii bancii, reprezentand o valoare negativa ce reprezinta datoria clientului fata de banca.
  *
  * @author Matei Maria-Bianca
- * @version 1.2
- * @since 29.10.2025
+ * @version 1.3
+ * @since 4.11.2025
  * @see ContBancar
  */
 public final class ContCreditor extends ContBancar {
@@ -29,6 +31,7 @@ public final class ContCreditor extends ContBancar {
             throw new ExceptieFonduriInsuficiente("Credit insuficient! Creditul disponibil este:"+this.getSoldDisponibil()+ " Suma dorita:"+suma);
         }
         this.sold-=suma;
+        this.sold = rotunjeste(this.sold);
     }
 
     @Override
@@ -42,12 +45,30 @@ public final class ContCreditor extends ContBancar {
     }
 
     public double getDatorieCurenta(){
-        return -1*this.sold;
+        return Math.abs(this.sold);
     }
 
     public double getLimitaCredit() {
         return this.limitaCredit;
     }
 
-
+    @Override
+    public void depunere(double suma) throws ExceptieLimitaDepunereDepasita, ExceptieOperatiuneInvalida {
+        if (suma <= 0) {
+            throw new IllegalArgumentException("Suma depusa trebuie sa fie pozitiva!");
+        }
+        Double limita=LIMITE_MAXIME_DEPUNERE.get(this.moneda);
+        if(limita!=null && suma>limita){
+            throw new ExceptieLimitaDepunereDepasita("Tranzactiile de peste "+ limita + " "+ this.moneda + " nu sunt permise!");
+        }
+        if(this.sold>=limita){
+            throw new ExceptieOperatiuneInvalida("Operatiune esuata! Nu exista datorii curente de platit!");
+        }
+        double soldNou=this.sold +suma;
+        if(soldNou>0.0){
+            throw new ExceptieOperatiuneInvalida("Operatiune esuata! Suma:"+suma+" este mai mare decat daoria curenta:"+getDatorieCurenta()+".");
+        }
+        this.sold=soldNou;
+        this.sold = rotunjeste(this.sold);
+    }
 }

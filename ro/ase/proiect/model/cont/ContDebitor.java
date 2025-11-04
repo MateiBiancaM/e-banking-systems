@@ -5,19 +5,26 @@ import ro.ase.proiect.exceptii.ExceptieRetragereZilnicaDepasita;
 import ro.ase.proiect.model.utilizator.Client;
 
 import java.time.LocalDate;
+import java.util.EnumMap;
+import java.util.Map;
 
 /**
  *Clasa finala/concreta. Aceasta extinde {@link ContBancar} si reprezinta un  <b>cont debitor</b>.
  * Soldul constituie banii clientului, reprezentand o valoare pozitiva, ce nu are voie sa scada sub 0.
  *
  * @author Matei Maria-Bianca
- * @version 1.3
- * @since 29.10.2025
+ * @version 1.4
+ * @since 4.11.2025
  * @see ContBancar
  * @see ro.ase.proiect.exceptii.ExceptieFonduriInsuficiente
  */
 public final class ContDebitor extends ContBancar {
-    private static final double LIMITA_RETRAGERE_ZILNICA_ATM=3500.0;
+    private static final Map<TipMoneda,Double> LIMITE_RETRAGERE_ZILNICA= new EnumMap<>(TipMoneda.class);
+    static{
+        LIMITE_RETRAGERE_ZILNICA.put(TipMoneda.RON,3500.0);
+        LIMITE_RETRAGERE_ZILNICA.put(TipMoneda.EUR,1000.0);
+        LIMITE_RETRAGERE_ZILNICA.put(TipMoneda.USD,1000.0);
+    }
     private double totalRetrasAstazi=0.0;
     private LocalDate dataUltimeiRetrageri=null;
 
@@ -33,16 +40,21 @@ public final class ContDebitor extends ContBancar {
         if(suma>this.sold){
             throw  new ExceptieFonduriInsuficiente("Fonduri insuficiente. Suma dorita:"+suma+" Sold disponibil:"+this.sold+".");
         }
+        Double limitaZilica=LIMITE_RETRAGERE_ZILNICA.get(this.moneda);
+        if(limitaZilica==null){
+            limitaZilica=0.0;
+        }
         LocalDate dataCurenta=LocalDate.now();
         if(this.dataUltimeiRetrageri==null || !this.dataUltimeiRetrageri.equals(dataCurenta)){
             this.totalRetrasAstazi=0.0;
         }
-        if(this.totalRetrasAstazi+suma> LIMITA_RETRAGERE_ZILNICA_ATM){
-            double disponibilAzi=LIMITA_RETRAGERE_ZILNICA_ATM-this.totalRetrasAstazi;
-            throw new ExceptieRetragereZilnicaDepasita("Limita zilnica de retragere("+LIMITA_RETRAGERE_ZILNICA_ATM+") a fost depasita. Astazi se mai pot retrage:"+disponibilAzi+".");
-
+        if(this.totalRetrasAstazi+suma>limitaZilica){
+            double disponibilAzi=limitaZilica-this.totalRetrasAstazi;
+            throw new ExceptieRetragereZilnicaDepasita("Limita zilnica de retragere("+limitaZilica+" "+this.moneda+") a fost depasita!"+
+                    "Astazi se mai pot retrage:"+disponibilAzi+" "+this.moneda+".");
         }
         this.sold-=suma;
+        this.sold = rotunjeste(this.sold);
         this.totalRetrasAstazi+=suma;
         this.dataUltimeiRetrageri=dataCurenta;
     }

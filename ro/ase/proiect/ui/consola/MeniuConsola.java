@@ -15,8 +15,8 @@ import java.util.Scanner;
  * fi delegate catre SistemBancarService
  *
  * @author Matei Maria-Bianca
- * @version 1.2
- * @since 3.11.2025
+ * @version 1.3
+ * @since 4.11.2025
  * @see SistemBancarService
  */
 public class MeniuConsola {
@@ -43,13 +43,13 @@ public class MeniuConsola {
                         gestioneazaInregistrare();
                         break;
                     case 0:
-                        System.out.println("Aplicatie inchisa!");
+                        System.out.println("La revedere!");
                         return;
                     default:
                         System.out.println("Optiune invalida!");
                 }
             } catch (ExceptieClientInexistent | ExceptieAutentificareEsuata | ExceptieClientExistent e) {
-                throw new RuntimeException(e);
+                System.err.println("EROARE: " + e.getMessage());
             }
         }
         System.out.println("\nBun venit, "+this.clientAutentificat.getNume()+" "+this.clientAutentificat.getPrenume()+ " !\n");
@@ -91,7 +91,7 @@ public class MeniuConsola {
                     default:
                         System.err.println("Opțiune invalidă. Vă rugăm reîncercați.");
                 }
-            } catch (ExceptiePermisiuneRespinsa | ExceptieContInexistent | ExceptieFonduriInsuficiente | ExceptieRetragereZilnicaDepasita e) {
+            } catch (ExceptiePermisiuneRespinsa | ExceptieContInexistent | ExceptieFonduriInsuficiente | ExceptieRetragereZilnicaDepasita | ExceptieLimitaDepunereDepasita | ExceptieTransferInvalid | ExceptieOperatiuneInvalida e) {
                 System.err.println("EROARE: " + e.getMessage());
             } catch (IllegalArgumentException e) {
                 System.err.println("EROARE DE VALIDARE: " + e.getMessage());
@@ -147,33 +147,57 @@ public class MeniuConsola {
         this.clientAutentificat = sistemBancarService.inregistrareClient(nume, prenume, cnp);
     }
 
-    private void gestioneazaDepunere() throws ExceptieContInexistent {
+    private void gestioneazaDepunere() throws ExceptieContInexistent, ExceptieLimitaDepunereDepasita, ExceptieOperatiuneInvalida {
+        System.out.println("\tPentru anulare introduceti:-1");
         System.out.print("Introduceți IBAN-ul destinație: ");
         String iban = scanner.nextLine();
-        System.out.print("Introduceți suma de depus: ");
+        if(iban.equals("-1")){
+            System.out.println("Operatiune anulata!");
+            return;
+        }
         double suma = citesteSuma();
+        if(suma<0){
+            return;
+        }
         sistemBancarService.efectueazaDepunere(iban, suma);
-        System.out.println("-->Suma:"+suma+" a fost depusa in contul:"+ iban+".");
+        System.out.println("SUCCES:Suma:"+suma+" a fost depusa in contul:"+ iban+".");
     }
 
     private void gestioneazaRetragere() throws ExceptieContInexistent, ExceptieFonduriInsuficiente, ExceptieRetragereZilnicaDepasita, ExceptiePermisiuneRespinsa {
-        System.out.print("Introduceți IBAN-ul sursă: ");
+        System.out.println("\tPentru anulare introduceti:-1");
+        System.out.print("Introduceți IBAN-ul destinație: ");
         String iban = scanner.nextLine();
-        System.out.print("Introduceți suma de retras: ");
+        if(iban.equals("-1")){
+            System.out.println("Operatiune anulata!");
+            return;
+        }
         double suma = citesteSuma();
+        if(suma<0){
+            return;
+        }
         sistemBancarService.efectueazaRetragere(this.clientAutentificat,iban, suma);
-        System.out.println("-->Suma:"+suma+" a fost retrasa din contul:"+ iban+".");
+        System.out.println("SUCCES:Suma:"+suma+" a fost retrasa din contul:"+ iban+".");
     }
 
-    private void gestioneazaTransfer() throws ExceptieContInexistent, ExceptieFonduriInsuficiente, ExceptieRetragereZilnicaDepasita, ExceptiePermisiuneRespinsa {
+    private void gestioneazaTransfer() throws ExceptieContInexistent, ExceptieFonduriInsuficiente, ExceptieRetragereZilnicaDepasita, ExceptiePermisiuneRespinsa, ExceptieLimitaDepunereDepasita, ExceptieTransferInvalid, ExceptieOperatiuneInvalida {
+        System.out.println("\tPentru anulare introduceti:-1");
         System.out.print("Introduceți IBAN-ul sursă: ");
         String ibanSursa = scanner.nextLine();
+        if(ibanSursa.equals("-1")){
+            System.out.println("Operatiune anulata!");
+            return;
+        }
         System.out.print("Introduceți IBAN-ul destinație: ");
         String ibanDestinatie = scanner.nextLine();
-        System.out.print("Introduceți suma de transferat: ");
+        if(ibanDestinatie.equals("-1")){
+            return;
+        }
         double suma = citesteSuma();
+        if(suma<0){
+            return;
+        }
         sistemBancarService.efecteazaTransfer(this.clientAutentificat,ibanSursa, ibanDestinatie, suma);
-        System.out.println("-->Suma:"+suma+" a fost transferata din contul:"+ ibanSursa+", catre contul:"+ ibanDestinatie+".");
+        System.out.println("SUCCES:Suma:"+suma+" a fost transferata din contul:"+ ibanSursa+", catre contul:"+ ibanDestinatie+".");
     }
 
     private void gestioneazaAfisareConturiClient() throws ExceptieClientInexistent {
@@ -185,14 +209,15 @@ public class MeniuConsola {
         }
         System.out.println("Conturile mele:");
         for(Cont cont : conturiClient) {
-            System.out.println("->IBAN:"+cont.getIban()+" Moneda:"+cont.getMoneda());
+            System.out.println("\t-->IBAN:"+cont.getIban()+" Moneda:"+cont.getMoneda());
             if(cont instanceof ContDebitor){
                 ContDebitor contDebitor = (ContDebitor) cont;
-                System.out.println("Cont Debit");
+                System.out.println("CONT DEBIT");
                 System.out.println("Sold:"+contDebitor.getSold());
                 System.out.println("Total retras azi:"+contDebitor.getTotalRetrasAstazi());
             }else if(cont instanceof ContCreditor){
                 ContCreditor contCreditor = (ContCreditor) cont;
+                System.out.println("CONT CREDIT");
                 System.out.println("Credit disponibil:"+contCreditor.getSoldDisponibil());
                 System.out.println("Datorie curenta:"+contCreditor.getDatorieCurenta());
 
@@ -205,12 +230,16 @@ public class MeniuConsola {
         System.out.println("Ce tip de cont doriti sa deschideti?");
         System.out.println("1. Cont debit");
         System.out.println("2. Cont credit");
+        System.out.println("0. Anulare");
         TipCont tipCont;
         int optiuneTip=citesteOptiune();
         if(optiuneTip==1){
             tipCont=TipCont.DEBIT;
         }else if(optiuneTip==2){
             tipCont=TipCont.CREDIT;
+        }else if(optiuneTip==0){
+            System.out.println("Optiune anulata!");
+            return;
         }else{
             System.err.println("Optiune invalida");
             return;
@@ -219,6 +248,7 @@ public class MeniuConsola {
         System.out.println("1. RON");
         System.out.println("2. EUR");
         System.out.println("3. USD");
+        System.out.println("0. Anulare");
         TipMoneda tipMoneda;
         int optiuneMoneda=citesteOptiune();
         switch (optiuneMoneda){
@@ -231,6 +261,9 @@ public class MeniuConsola {
             case 3:
                 tipMoneda=TipMoneda.USD;
                 break;
+            case 0:
+                System.out.println("Optiune anulata!");
+                return;
             default:
                 System.err.println("Optiune invalida");
                 return;
@@ -238,19 +271,29 @@ public class MeniuConsola {
         sistemBancarService.creazaContNou(this.clientAutentificat,tipCont,tipMoneda);
     }
 
-    private void gestioneazaRaportActivitate(){
-        System.out.println("Raport activitate pentru:"+clientAutentificat.getNume()+" "+clientAutentificat.getPrenume());
-        double[][] statistici= sistemBancarService.genereazaStatisticiClient(this.clientAutentificat);
-        System.out.println("Operatiuni ( Total suma | Numar operatiuni ) ");
-        System.out.printf("Depuneri:            %.2f | %.0f\n",statistici[0][0],statistici[0][1]);
-        System.out.printf("Retrageri:           %.2f | %.0f\n",statistici[1][0],statistici[1][1]);
-        System.out.printf("Transferuri Trimise: %.2f | %.0f\n",statistici[2][0],statistici[2][1]);
-        System.out.printf("Transferuri Primite: %.2f | %.0f\n",statistici[3][0],statistici[3][1]);
-        System.out.println("\nDoriti sa deschideti fereastra grafica a raportului?(1=DA, 0=NU)");
-        int opt=citesteOptiune();
-        if(opt==1){
-            new FereastraRaport(statistici,clientAutentificat.getNume(),clientAutentificat.getPrenume());
+    private void gestioneazaRaportActivitate() throws ExceptieClientInexistent, ExceptieContInexistent, ExceptiePermisiuneRespinsa {
+        List<Cont> conturileMele=sistemBancarService.getConturiByClientId(this.clientAutentificat.getClientId());
+        if(conturileMele.isEmpty()){
+            System.out.println("Nu detineti niciun cont pentru generarea unui raport!");
+            return;
         }
+        int i=1;
+        for(Cont c:conturileMele){
+            System.out.println(i+". "+c.getIban()+" ["+c.getMoneda()+"]");
+            i++;
+        }
+        System.out.println("0. Anulare");
+        System.out.println("Alegere cont pentru generare raport:");
+        int opt= citesteOptiune();
+        if(opt<=0|| opt>conturileMele.size()){
+            System.out.println("Optiune anulata!");
+            return;
+        }
+        Cont contSelectat=conturileMele.get(opt-1);
+        String ibanSelectat=contSelectat.getIban();
+        TipMoneda monedaSelectata=contSelectat.getMoneda();
+        double[][] statistici= sistemBancarService.genereazaStatisticiContClient(this.clientAutentificat,ibanSelectat);
+        new FereastraRaport(statistici,clientAutentificat.getNume(),clientAutentificat.getPrenume(),contSelectat);
     }
 
     private int citesteOptiune() {
@@ -267,17 +310,22 @@ public class MeniuConsola {
 
     private double citesteSuma() {
         while (true) {
+            System.out.println("\tPentru anulare introduceti:-1");
+            System.out.println("Introduceti suma dorita:");
+            String input=scanner.nextLine();
             try {
-                double suma = scanner.nextDouble();
-                scanner.nextLine();
+                if(input.equals("-1")){
+                    System.out.println("Operatiune anulata!");
+                    return -1.0;
+                }
+                double suma = Double.parseDouble(input);
                 if (suma <= 0) {
-                    System.err.println("Suma trebuie să fie pozitivă. Reîncercați:");
+                    System.err.println("Suma trebuie să fie pozitivă. Reîncercați.");
                 } else {
                     return suma;
                 }
-            } catch (InputMismatchException e) {
+            } catch (NumberFormatException e) {
                 System.err.println("Vă rugăm introduceți o valoare numerică validă. Reîncercați:");
-                scanner.nextLine();
             }
         }
     }

@@ -8,10 +8,10 @@ import java.util.Objects;
  * Aceasta are drept scop principal <b>stocarea</b> unui set de valori ce nu se mai schimba odata ce tranzactia a fost creata.
  *
  * @author Matei Maria-Bianca
- * @version 1.1
- * @since 27.10.2025
+ * @version 1.2
+ * @since 4.11.2025
  */
-public final class Tranzactie {
+public final class Tranzactie implements Comparable<Tranzactie> {
     private final String idTranzactie;
     private final LocalDate data;
     private final String tipTransfer;
@@ -74,5 +74,14 @@ public final class Tranzactie {
                 ", ibanSursa='" + ibanSursa + '\'' +
                 ", ibanDestinatie='" + ibanDestinatie + '\'' +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Tranzactie o) {
+        int comparatieData = this.data.compareTo(o.data);
+        if (comparatieData != 0) {
+            return comparatieData;
+        }
+        return this.idTranzactie.compareTo(o.idTranzactie);
     }
 }

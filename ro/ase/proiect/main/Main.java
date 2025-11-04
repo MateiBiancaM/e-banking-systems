@@ -28,7 +28,7 @@ import java.util.Map;
  * @since 29.10.2025
  */
 public class Main {
-    public static void main(String[] args) throws ExceptieDateInvalide {
+    public static void main(String[] args)  {
         System.out.println("--- BUN VENIT LA E-BANKING ---");
 
         String clientiFile = "ro/ase/proiect/clienti.txt";
@@ -41,7 +41,11 @@ public class Main {
 
         MeniuConsola meniu = new MeniuConsola(serviciuBancar);
 
-        serviciuBancar.incarcareDate();
+        try {
+            serviciuBancar.incarcareDate();
+        } catch (ExceptieDateInvalide e) {
+            throw new RuntimeException(e);
+        }
 
         meniu.start();
 

@@ -8,16 +8,16 @@ import ro.ase.proiect.model.utilizator.Client;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 /**
  *Implementarea concreta a interfetei {@link StocareDate} ce se ocupa de gestionarea datelor in fisiere text.
  *
  * @author Matei Maria-Bianca
- * @version 1.2
- * @since 31.10.2025
+ * @version 1.3
+ * @since 4.11.2025
  */
 public class StocareDateText implements StocareDate{
     private String caleFisierClienti;
@@ -134,8 +134,8 @@ public class StocareDateText implements StocareDate{
     }
 
     @Override
-    public List<Tranzactie> incarcaTranzactii() throws ExceptieDateInvalide {
-        List<Tranzactie> tranzactiiIncarcate = new ArrayList<>();
+    public Set<Tranzactie> incarcaTranzactii() throws ExceptieDateInvalide {
+        Set<Tranzactie> tranzactiiIncarcate = new TreeSet<>();
         File fisier = new File(caleFisierTranzactii);
         if(!fisier.exists()){
             System.out.println("Fisierul:"+caleFisierTranzactii+", nu a fost gasit! Numar tranzactii:0!");
@@ -223,7 +223,7 @@ public class StocareDateText implements StocareDate{
     }
 
     @Override
-    public void salveazaTranzactii(List<Tranzactie> tranzactii) {
+    public void salveazaTranzactii(Set<Tranzactie> tranzactii) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(caleFisierTranzactii))) {
             for (Tranzactie t : tranzactii) {
                 String ibanSursa = (t.getIbanSursa() != null) ? t.getIbanSursa() : VALOARE_NULL;
