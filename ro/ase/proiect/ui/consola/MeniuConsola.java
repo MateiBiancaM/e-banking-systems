@@ -51,7 +51,7 @@ public class MeniuConsola {
                     default:
                         System.err.println("Opțiune necunoscută.");
                 }
-            } catch (ExceptieAutentificareEsuata | ExceptieClientExistent e) {
+            } catch (ExceptieAutentificareEsuata | ExceptieClientExistent |ExceptieDateInvalide e) {
                 System.err.println("EROARE: " + e.getMessage());
                 System.out.println("Apăsați Enter pentru a reîncerca...");
                 scanner.nextLine();
@@ -125,10 +125,10 @@ public class MeniuConsola {
         this.clientAutentificat = sistemBancarService.autentificareClient(nume, cnp);
     }
 
-    private void gestioneazaInregistrare() throws ExceptieClientExistent {
-        System.out.print("Introduceți Numele de familie: ");
+    private void gestioneazaInregistrare() throws ExceptieClientExistent, ExceptieDateInvalide {
+        System.out.print("Introduceți numele de familie: ");
         String nume = scanner.nextLine();
-        System.out.print("Introduceți Prenumele: ");
+        System.out.print("Introduceți prenumele: ");
         String prenume = scanner.nextLine();
         System.out.print("Introduceți CNP-ul: ");
         String cnp = scanner.nextLine();

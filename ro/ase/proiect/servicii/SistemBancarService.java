@@ -132,8 +132,19 @@ public class SistemBancarService {
                 ibanDestinatie);
         this.istoricTranzactii.add(t);
     }
-
-    public Client inregistrareClient(String nume, String prenume, String cnp) throws ExceptieClientExistent {
+    private boolean esteFormatCnpValid(String cnp) {
+        if (cnp == null) {
+            return false;
+        }
+        if (cnp.length() != 13) {
+            return false;
+        }
+        return cnp.matches("\\d+");
+    }
+    public Client inregistrareClient(String nume, String prenume, String cnp) throws ExceptieClientExistent, ExceptieDateInvalide {
+        if (!esteFormatCnpValid(cnp)) {
+            throw new ExceptieDateInvalide("Format CNP invalid. CNP-ul trebuie să conțină exact 13 cifre.");
+        }
         for(Client clientExistent : clienti.values()){
             if(clientExistent.getCnp().equals(cnp)){
                 throw new ExceptieClientExistent("Un client cu CNP-ul "+cnp+" este deja inregistrat!");
