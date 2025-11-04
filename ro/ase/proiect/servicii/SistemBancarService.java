@@ -6,6 +6,10 @@ import ro.ase.proiect.model.tranzactii.Tranzactie;
 import ro.ase.proiect.model.utilizator.Client;
 import ro.ase.proiect.persistenta.StocareDate;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -21,6 +25,7 @@ import java.util.*;
  * @see Tranzactie
  */
 public class SistemBancarService {
+    private static final String FOLDER_EXTRASE = "ExtraseCont";
     private static final double LIMITA_STANDARD_CREDIT=10000;
     private Map<String, Client> clienti;
     private Map<String, Cont> conturi;
@@ -236,5 +241,89 @@ public class SistemBancarService {
             }
         }
         return statisticiContClient;
+    }
+
+    /**
+     * Matoda care se ocupa cu generarea unui extras de cont.
+     *
+     * @param clientAutentificat Clientul care face cererea.
+     * @param ibanSelectat IBAN-ul contului țintă.
+     * @return Calea completă a fișierului generat (ex: "ExtraseCont\Extras_RO01...txt").
+     * @throws ExceptieContInexistent Dacă IBAN-ul nu e găsit.
+     * @throws ExceptiePermisiuneRespinsa Dacă contul nu aparține clientului.
+     * @throws IOException Dacă apare o eroare la scrierea fișierului.
+     */
+    public String genereazaExtrasDeCont(Client clientAutentificat, String ibanSelectat, int luniInUrma)
+            throws ExceptieContInexistent, ExceptiePermisiuneRespinsa, IOException {
+
+        Cont cont = conturi.get(ibanSelectat);
+        if (cont == null) {
+            throw new ExceptieContInexistent("Contul " + ibanSelectat + " nu exista.");
+        }
+        if (!cont.getClient().getClientId().equals(clientAutentificat.getClientId())) {
+            throw new ExceptiePermisiuneRespinsa("Acces refuzat. Contul " + ibanSelectat + " nu va apartine.");
+        }
+
+        File director = new File(FOLDER_EXTRASE);
+        if (!director.exists()) {
+            director.mkdir();
+        }
+
+        String numeFisier = "Extras_" + ibanSelectat + "_" + LocalDate.now() + ".txt";
+        String caleCompleta = FOLDER_EXTRASE + File.separator + numeFisier;
+        LocalDate dataInceput = null;
+        String perioadaRaport;
+        if (luniInUrma > 0) {
+            dataInceput = LocalDate.now().minusMonths(luniInUrma);
+            perioadaRaport = "Ultimele " + luniInUrma + " luni";
+        } else {
+            perioadaRaport = "Istoric complet";
+        }
+        try (PrintWriter writer = new PrintWriter(new FileWriter(caleCompleta))) {
+            writer.println("--- EXTRAS DE CONT ---");
+            writer.println("Client: " + clientAutentificat.getNume() + " " + clientAutentificat.getPrenume());
+            writer.println("Cont IBAN: " + ibanSelectat);
+            writer.println("Moneda: " + cont.getMoneda());
+            writer.println("Data generării: " + LocalDate.now());
+            writer.println("Perioada raport: " + perioadaRaport);
+            writer.println("----------------------------------------------------------------------");
+            writer.printf("%-12s | %-15s | %-15s | %-30s\n", "Data", "Tip", "Suma (" + cont.getMoneda() + ")", "Detalii");
+            writer.println("----------------------------------------------------------------------");
+
+            // 6. Iterăm prin istoricul DEJA SORTAT (TreeSet)
+            for (Tranzactie t : istoricTranzactii) {
+                if (dataInceput != null && t.getData().isBefore(dataInceput)) {
+                    continue;
+                }
+                String detalii = "";
+                String sumaFormatata = "";
+
+                if (ibanSelectat.equals(t.getIbanSursa())) {
+                    sumaFormatata = String.format("-%,.3f", t.getSuma());
+                    if (t.getTipTransfer().equals("Retragere")) {
+                        detalii = "Retragere numerar";
+                    } else {
+                        detalii = "Transfer către: " + t.getIbanDestinatie();
+                    }
+                } else if (ibanSelectat.equals(t.getIbanDestinatie())) {
+                    sumaFormatata = String.format("+%,.3f", t.getSuma());
+                    if (t.getTipTransfer().equals("Depunere")) {
+                        detalii = "Depunere numerar";
+                    } else {
+                        detalii = "Transfer de la: " + t.getIbanSursa();
+                    }
+                } else {
+                    continue;
+                }
+                writer.printf("%-12s | %-15s | %15s | %-30s\n",
+                        t.getData().toString(),
+                        t.getTipTransfer(),
+                        sumaFormatata,
+                        detalii
+                );
+            }
+            writer.println("----------------------------------------------------------------------");
+        }
+        return caleCompleta;
     }
 }

@@ -56,6 +56,7 @@ public final class ContDebitor extends ContBancar {
         this.sold-=suma;
         this.sold = rotunjeste(this.sold);
         this.totalRetrasAstazi+=suma;
+        this.totalRetrasAstazi = rotunjeste(this.totalRetrasAstazi);
         this.dataUltimeiRetrageri=dataCurenta;
     }
 

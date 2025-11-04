@@ -24,14 +24,22 @@ public class FereastraRaport extends JFrame {
         setLocationRelativeTo(null);//centrarea ferestrei
 
         String[] numeColoane={"Operatiuni","Total suma("+contSelectat.getMoneda() +")"," Numar operatiuni"};
-        Object[][] data= {
-                {"Depuneri", statistici[0][0], (int)statistici[0][1]},
-                {"Retrageri", statistici[1][0], (int)statistici[1][1]},
-                {"Transferuri Trimise", statistici[2][0], (int)statistici[2][1]},
-                {"Transferuri Primite", statistici[3][0], (int)statistici[3][1]}
+        Object[][] dateTabel = {
+                {"Depuneri",
+                        String.format("%,.3f", statistici[0][0]),
+                        (int) statistici[0][1]},
+                {"Retrageri",
+                        String.format("%,.3f", statistici[1][0]),
+                        (int) statistici[1][1]},
+                {"Transferuri Trimise",
+                        String.format("%,.3f", statistici[2][0]),
+                        (int) statistici[2][1]},
+                {"Transferuri Primite",
+                        String.format("%,.3f", statistici[3][0]),
+                        (int) statistici[3][1]}
         };
 
-        DefaultTableModel model = new DefaultTableModel(data,numeColoane);
+        DefaultTableModel model = new DefaultTableModel(dateTabel,numeColoane);
         tabelStatistici = new JTable(model);
         tabelStatistici.setEnabled(false);
 
