@@ -5,3 +5,7 @@
 *.iml
 *.class
 *.log
+
+clienti.txt
+conturi.txt
+tranzactii.txt
