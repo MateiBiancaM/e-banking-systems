@@ -31,6 +31,7 @@ public class FereastraMeniuPrincipal extends JDialog implements ActionListener {
         add(creeazaButonMeniu("5. Deschide un cont nou", "5"));
         add(creeazaButonMeniu("6. Vezi raportul de activitate", "6"));
         add(creeazaButonMeniu("7. Generează extras de cont", "7"));
+        add(creeazaButonMeniu("8. Vezi grafic flux financiar (30 zile)", "8"));
         add(creeazaButonMeniu("0. Deconectare", "0"));
     }
 

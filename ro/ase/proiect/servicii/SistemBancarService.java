@@ -337,4 +337,51 @@ public class SistemBancarService {
         }
         return caleCompleta;
     }
+
+    /**
+     * Metoda generează statisticile zilnice (intrări și ieșiri) pentru ultimele N zile, pentru un cont specific.
+     *
+     * @param ibanContSelectat IBAN-ul contului pentru care se generează statisticile.
+     * @param zileInUrma Numărul de zile pentru istoric î.
+     * @return O Map<String, double[]> unde cheile sunt "intrari" și "iesiri".
+     * @throws ExceptieContInexistent Dacă IBAN-ul nu există
+     */
+    public Map<String, double[]> genereazaStatisticiZilnice(String ibanContSelectat, int zileInUrma)
+            throws ExceptieContInexistent {
+
+        if (!conturi.containsKey(ibanContSelectat)) {
+            throw new ExceptieContInexistent("Contul cu IBAN-ul " + ibanContSelectat + " nu există.");
+        }
+
+        double[] intrariZilnice = new double[zileInUrma];
+        double[] iesiriZilnice = new double[zileInUrma];
+        LocalDate azi = LocalDate.now();
+
+        for (Tranzactie t : istoricTranzactii) {
+            LocalDate dataTranzactie = t.getData();
+
+            if (dataTranzactie.isBefore(azi.minusDays(zileInUrma - 1))) {
+                continue;
+            }
+            if (dataTranzactie.isAfter(azi)) {
+                continue;
+            }
+            long zileDiferenta = dataTranzactie.until(azi).getDays();
+            if (zileDiferenta >= 0 && zileDiferenta < zileInUrma) {
+
+                if (ibanContSelectat.equals(t.getIbanDestinatie())) {
+                    intrariZilnice[(int) zileDiferenta] += t.getSuma();
+                }
+
+                else if (ibanContSelectat.equals(t.getIbanSursa())) {
+                    iesiriZilnice[(int) zileDiferenta] += t.getSuma();
+                }
+
+            }
+        }
+        Map<String, double[]> rezultate = new HashMap<>();
+        rezultate.put("intrari", intrariZilnice);
+        rezultate.put("iesiri", iesiriZilnice);
+        return rezultate;
+    }
 }

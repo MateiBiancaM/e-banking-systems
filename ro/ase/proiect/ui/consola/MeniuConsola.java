@@ -5,12 +5,14 @@ import ro.ase.proiect.model.cont.*;
 import ro.ase.proiect.model.utilizator.Client;
 import ro.ase.proiect.servicii.SistemBancarService;
 import ro.ase.proiect.ui.gui.FereastraAutentificare;
+import ro.ase.proiect.ui.gui.FereastraGrafic;
 import ro.ase.proiect.ui.gui.FereastraMeniuPrincipal;
 import ro.ase.proiect.ui.gui.FereastraRaport;
 
 import java.io.IOException;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -92,6 +94,9 @@ public class MeniuConsola {
                         break;
                     case 7:
                         gestioneazaExtrasDeCont();
+                        break;
+                    case 8:
+                        gestioneazaGraficFluxFinanciar();
                         break;
                     case 0:
                         ruleaza = false;
@@ -371,4 +376,46 @@ public class MeniuConsola {
         System.out.println("SUCCES: Extrasul de cont a fost generat și salvat aici:");
         System.out.println(caleFisier);
     }
+
+    /**
+     * NOU/MODIFICAT: Gestionează lansarea ferestrei cu graficul fluxului financiar zilnic,
+     * după ce utilizatorul selectează un cont.
+     */
+    private void gestioneazaGraficFluxFinanciar()
+            throws ExceptieClientInexistent, ExceptieContInexistent, ExceptiePermisiuneRespinsa {
+
+        List<Cont> conturileMele = sistemBancarService.getConturiByClientId(this.clientAutentificat.getClientId());
+        if (conturileMele.isEmpty()) {
+            System.out.println("Nu aveți conturi înregistrate pentru a genera un grafic.");
+            System.out.println("Operațiune anulată.");
+            return;
+        }
+        int index = 1;
+        for (Cont cont : conturileMele) {
+            System.out.println(index + ". " + cont.getIban() + " [" + cont.getMoneda() + "]");
+            index++;
+        }
+        System.out.println("0. Anulare");
+        System.out.println("Vă rugăm alegeți contul pentru care doriți graficul fluxului financiar:");
+
+        int optiune = citesteOptiune();
+        if (optiune <= 0 || optiune > conturileMele.size()) {
+            System.out.println("Operațiune anulată.");
+            return;
+        }
+
+        Cont contSelectat = conturileMele.get(optiune - 1);
+        String ibanContSelectat = contSelectat.getIban();
+        String numeClient = clientAutentificat.getNume();
+        int zileInUrma = 30;
+
+        Map<String, double[]> statistici = sistemBancarService.genereazaStatisticiZilnice(
+                ibanContSelectat,
+                zileInUrma
+        );
+
+        new FereastraGrafic(statistici, numeClient, zileInUrma);
+        System.out.println("Fereastra cu graficul fluxului financiar a fost lansată.");
+    }
+
 }
