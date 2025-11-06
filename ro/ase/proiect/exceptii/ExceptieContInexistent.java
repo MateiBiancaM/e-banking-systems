@@ -7,9 +7,11 @@ package ro.ase.proiect.exceptii;
  * @since 26.10.2025
  */
 public class ExceptieContInexistent extends Exception{
-    public ExceptieContInexistent() {
-    }
-
+    /**
+     * Constructor pentru exceptia de cont inexistent esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieContInexistent(String message) {
         super(message);
     }

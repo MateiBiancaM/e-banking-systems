@@ -19,15 +19,20 @@ import java.util.Map;
 /**
  * Fereastră GUI (JFrame) care afișează un grafic (Bar Chart)
  * pentru intrări și ieșiri zilnice, folosind biblioteca JFreeChart.
+ *
+ * @author Matei Maria-Bianca
+ * @version 1.0
+ * @since 4.11.2025
  */
 public class FereastraGrafic extends JFrame {
 
     /**
      * Constructorul ferestrei de grafic.
+     * Inițializează, configurează și afișează fereastra cu graficul de bare.
      *
-     * @param statisticiZilnice Map<String, double[]> cu "intrari" și "iesiri".
-     * @param numeClient Numele clientului pentru titlu.
-     * @param zileInUrma Numărul de zile reprezentate în grafic.
+     * @param statisticiZilnice Map&lt;String, double[]&gt; cu "intrari" si "iesiri"
+     * @param numeClient        Numele clientului pentru titlu.
+     * @param zileInUrma        Numărul de zile reprezentate în grafic.
      */
     public FereastraGrafic(Map<String, double[]> statisticiZilnice, String numeClient, int zileInUrma) {
         setTitle("Grafic Flux Financiar (Ultimele " + zileInUrma + " zile) - " + numeClient);
@@ -68,7 +73,11 @@ public class FereastraGrafic extends JFrame {
 
     /**
      * Metodă ajutătoare care convertește Map-ul de double[] într-un set de date pe care JFreeChart îl înțelege.
-     * Afișează zilele de la cea mai veche la cea mai nouă pe axa X.
+     * Afișează zilele de la cea mai veche la cea mai nouă pe axa X (cronologic).
+     *
+     * @param statistici Map-ul (cheile "intrari", "iesiri") cu vectorii de sume zilnice.
+     * @param zileInUrma Numărul de zile de procesat.
+     * @return Un {@link DefaultCategoryDataset} populat pentru grafic.
      */
     private DefaultCategoryDataset createDataset(Map<String, double[]> statistici, int zileInUrma) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();

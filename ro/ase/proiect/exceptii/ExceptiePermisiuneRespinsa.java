@@ -7,9 +7,11 @@ package ro.ase.proiect.exceptii;
  * @since 02.11.2025
  */
 public class ExceptiePermisiuneRespinsa extends Exception {
-    public ExceptiePermisiuneRespinsa() {
-    }
-
+    /**
+     * Constructor pentru exceptia de permisiune respinsa esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptiePermisiuneRespinsa(String message) {
         super(message);
     }

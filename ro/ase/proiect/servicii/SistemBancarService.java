@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 /**
- *Clasa care gestioneaza operatiuniile si starea aplicatiei in memorie
+ *Clasa care gestioneaza operatiuniile si starea aplicatiei in memorie.
  *
  * @author Matei Maria-Bianca
  * @version 1.5
@@ -25,15 +25,34 @@ import java.util.*;
  * @see Tranzactie
  */
 public class SistemBancarService {
+    /**
+     * Directorul unde vor fi salvate fisierele text cu extrasele de cont.
+     */
     private static final String FOLDER_EXTRASE = "ExtraseCont";
+    /**
+     * Limita de credit standard acordată la crearea unui nou cont de credit.
+     */
     private static final double LIMITA_STANDARD_CREDIT=10000;
+    /**
+     * Colectia de clienti incarcati in memorie, mapati dupa ID-ul de client.
+     */
     private Map<String, Client> clienti;
+    /**
+     * Colectia de conturi incarcate in memorie, mapate dupa IBAN.
+     */
     private Map<String, Cont> conturi;
+    /**
+     * Colectia sortata (TreeSet) a tuturor tranzactiilor efectuate.
+     */
     private SortedSet<Tranzactie> istoricTranzactii;
+    /**
+     * Obiectul responsabil cu persistenta datelor (citirea/scrierea din fisiere).
+     */
     private StocareDate managerStocare;
 
     /**
      * Constructorul primeste o implementare pentru interfata StocareDate.
+     *
      * @param managerStocare este responsabil cu citirea/scrierea datelor, indiferent de format.
      */
     public SistemBancarService(StocareDate managerStocare) {
@@ -44,8 +63,10 @@ public class SistemBancarService {
     }
 
     /**
-     * Metoda apeleaza menegerul de stocare a datelor pentru a incarca datele din fisiere in colectiile din memorie
-     * Este apelata la pornirea aplicatiei
+     * Metoda apeleaza manegerul de stocare a datelor pentru a incarca datele din fisiere in colectiile din memorie.
+     * Este apelata la pornirea aplicatiei.
+     *
+     * @throws ExceptieDateInvalide dacă datele din fișiere sunt corupte sau au format invalid.
      */
     public void incarcareDate() throws ExceptieDateInvalide {
         this.clienti=managerStocare.incarcaClienti();
@@ -53,8 +74,10 @@ public class SistemBancarService {
         this.istoricTranzactii= (SortedSet<Tranzactie>) managerStocare.incarcaTranzactii();
     }
     /**
-     * Metoda apeleaza menegerul de stocare a datelor pentru a salva datele din colectiile din memorie in fisiere
-     * Este apelata la pornirea aplicatiei
+     * Metoda apeleaza manegerul de stocare a datelor pentru a salva datele din colectiile din memorie in fisiere.
+     * Este apelata la inchiderea aplicatiei.
+     *
+     * @throws RuntimeException dacă apare o eroare I/O în timpul salvării.
      */
     public void salvareDate(){
         try {
@@ -66,6 +89,15 @@ public class SistemBancarService {
         }
     }
 
+    /**
+     * Efectuează o depunere în contul destinație și înregistrează tranzacția.
+     *
+     * @param ibanDestinatie Contul în care se depun banii.
+     * @param suma           Suma de depus.
+     * @throws ExceptieContInexistent           dacă IBAN-ul destinație nu este găsit.
+     * @throws ExceptieLimitaDepunereDepasita   dacă suma depășește limita unică de depunere.
+     * @throws ExceptieOperatiuneInvalida       dacă operațiunea este invalidă.
+     */
     public void efectueazaDepunere(String ibanDestinatie, double suma) throws ExceptieContInexistent, ExceptieLimitaDepunereDepasita, ExceptieOperatiuneInvalida {
         ContBancar cont= (ContBancar) conturi.get(ibanDestinatie);
         if(cont==null){
@@ -81,6 +113,17 @@ public class SistemBancarService {
         this.istoricTranzactii.add(t);
     }
 
+    /**
+     * Efectuează o retragere din contul sursă, validând proprietatea clientului. Înregistrează tranzacția în istoric.
+     *
+     * @param clientAutentificat Clientul care efectuează operațiunea.
+     * @param ibanSursa          Contul din care se retrag banii.
+     * @param suma               Suma de retras.
+     * @throws ExceptieContInexistent           dacă IBAN-ul sursă nu este găsit.
+     * @throws ExceptieRetragereZilnicaDepasita dacă limita zilnică de retragere este depășită.
+     * @throws ExceptieFonduriInsuficiente      dacă soldul/creditul disponibil este insuficient.
+     * @throws ExceptiePermisiuneRespinsa       dacă contul sursă nu aparține clientului autentificat.
+     */
     public void efectueazaRetragere(Client clientAutentificat, String ibanSursa,double suma) throws ExceptieContInexistent, ExceptieRetragereZilnicaDepasita, ExceptieFonduriInsuficiente, ExceptiePermisiuneRespinsa {
         ContBancar cont= (ContBancar) conturi.get(ibanSursa) ;
         if(cont==null){
@@ -99,6 +142,22 @@ public class SistemBancarService {
         this.istoricTranzactii.add(t);
     }
 
+    /**
+     * Transferă o sumă din contul sursă în contul destinație. Validează proprietatea contului sursă și identitatea monedelor.
+     * Dacă depunerea în destinație eșuează, retragerea din sursă este anulată.
+     *
+     * @param clientAutentificat Clientul care inițiază transferul.
+     * @param ibanSursa          Contul sursă.
+     * @param ibanDestinatie     Contul destinație.
+     * @param suma               Suma de transferat.
+     * @throws ExceptieContInexistent           dacă oricare dintre IBAN-uri nu este găsit.
+     * @throws ExceptieRetragereZilnicaDepasita dacă se depășește limita la retragerea din sursă.
+     * @throws ExceptieFonduriInsuficiente      dacă fondurile din sursă sunt insuficiente.
+     * @throws ExceptiePermisiuneRespinsa       dacă contul sursă nu aparține clientului.
+     * @throws ExceptieLimitaDepunereDepasita   dacă se depășește limita la depunerea în destinație.
+     * @throws ExceptieTransferInvalid          dacă monedele conturilor nu corespund.
+     * @throws ExceptieOperatiuneInvalida       dacă depunerea în destinație este invalidă.
+     */
     public void efecteazaTransfer(Client clientAutentificat, String ibanSursa, String ibanDestinatie, double suma) throws ExceptieContInexistent, ExceptieRetragereZilnicaDepasita, ExceptieFonduriInsuficiente, ExceptiePermisiuneRespinsa, ExceptieLimitaDepunereDepasita, ExceptieTransferInvalid, ExceptieOperatiuneInvalida {
         ContBancar contSursa= (ContBancar) conturi.get(ibanSursa);
         ContBancar contDestinatie= (ContBancar) conturi.get(ibanDestinatie);
@@ -132,6 +191,12 @@ public class SistemBancarService {
                 ibanDestinatie);
         this.istoricTranzactii.add(t);
     }
+    /**
+     * Metodă privată utilitară pentru a valida formatul unui CNP.
+     *
+     * @param cnp CNP-ul de validat.
+     * @return true dacă CNP-ul are 13 caractere și conține doar cifre, false altfel.
+     */
     private boolean esteFormatCnpValid(String cnp) {
         if (cnp == null) {
             return false;
@@ -141,6 +206,17 @@ public class SistemBancarService {
         }
         return cnp.matches("\\d+");
     }
+
+    /**
+     * Înregistrează un client nou în sistem, validând formatul și unicitatea CNP-ului.
+     *
+     * @param nume    Numele de familie al clientului.
+     * @param prenume Prenumele clientului.
+     * @param cnp     CNP-ul trebuie să aibă 13 cifre și să fie unic.
+     * @return Obiectul Client nou creat și adăugat în sistem.
+     * @throws ExceptieClientExistent dacă un client cu același CNP există deja.
+     * @throws ExceptieDateInvalide   dacă formatul CNP-ului este invalid.
+     */
     public Client inregistrareClient(String nume, String prenume, String cnp) throws ExceptieClientExistent, ExceptieDateInvalide {
         if (!esteFormatCnpValid(cnp)) {
             throw new ExceptieDateInvalide("Format CNP invalid. CNP-ul trebuie să conțină exact 13 cifre.");
@@ -157,6 +233,14 @@ public class SistemBancarService {
         return  client;
     }
 
+    /**
+     * Autentifică un client existent, verificând potrivirea CNP-ului și a numelui.
+     *
+     * @param nume Numele de familie al clientului.
+     * @param cnp  CNP-ul clientului.
+     * @return Obiectul Client autentificat.
+     * @throws ExceptieAutentificareEsuata dacă CNP-ul nu este găsit sau dacă numele nu corespunde CNP-ului.
+     */
     public Client autentificareClient(String nume, String cnp) throws ExceptieAutentificareEsuata {
         Client clientGasit=null;
         for(Client clientExistent : clienti.values()){
@@ -176,6 +260,13 @@ public class SistemBancarService {
         }
     }
 
+    /**
+     * Returnează lista tuturor conturilor deținute de un client specificat.
+     *
+     * @param clientId ID-ul clientului pentru care se caută conturile.
+     * @return O listă (posibil goală) cu conturile deținute de client.
+     * @throws ExceptieClientInexistent dacă ID-ul clientului nu este găsit în sistem.
+     */
     public List<Cont> getConturiByClientId(String clientId) throws ExceptieClientInexistent {
         if(!clienti.containsKey(clientId)){
             throw new ExceptieClientInexistent("Clientul cu ID-ul cautat nu exista!");
@@ -188,8 +279,14 @@ public class SistemBancarService {
         }
         return conturiGasite;
     }
-
-    public Cont creazaContNou(Client client, TipCont tip, TipMoneda moneda){
+    /**
+     * Creează un cont nou (DEBIT sau CREDIT) pentru un client. Generează un IBAN unic și îl înregistrează în sistem.
+     *
+     * @param client Deținătorul contului.
+     * @param tip    Tipul contului.
+     * @param moneda Moneda contului.
+     */
+    public void creazaContNou(Client client, TipCont tip, TipMoneda moneda){
         String ibanNou= genereazaIbanUnic();
         Cont contNou;
         if(tip==TipCont.DEBIT){
@@ -199,9 +296,14 @@ public class SistemBancarService {
         }
         conturi.put(ibanNou,contNou);
         System.out.println("Cont "+tip+" creat cu succes!");
-        return contNou;
     }
-
+    /**
+     * Metodă privată utilitară pentru a genera un IBAN unic.
+     * Combină un prefix, un număr secvențial și o valoare aleatorie și verifică unicitatea
+     * în harta de conturi existentă.
+     *
+     * @return Un String reprezentând noul IBAN unic.
+     */
     private String genereazaIbanUnic() {
         String iban;
         do{
@@ -214,12 +316,15 @@ public class SistemBancarService {
     /**
      * Metoda va genera o matrice de statistici pentru clientul autentificat.
      *
-     * @param clientAutentificat clientul pemtru care se genereaza raportul
+     * @param clientAutentificat clientul pentru care se genereaza raportul.
+     * @param ibanSelectat       IBAN-ul contului analizat.
      * @return o matrice double[4][2] unde:
      * [0][0]= suma totala depuneri, [0][1]=numar depuneri
      * [1][0]= suma totala retrageri, [1][1]=numar retrageri
      * [2][0]= suma totala transferuri trimise, [2][1]=numar transferuri trimise
      * [3][0]= suma totala transferuri primite, [3][1]=numar transferuri primite
+     * @throws ExceptieContInexistent     dacă IBAN-ul nu este găsit.
+     * @throws ExceptiePermisiuneRespinsa dacă contul nu aparține clientului autentificat.
      */
     public double[][] genereazaStatisticiContClient(Client clientAutentificat, String ibanSelectat) throws ExceptieContInexistent, ExceptiePermisiuneRespinsa {
         Cont cont=conturi.get(ibanSelectat);
@@ -255,14 +360,15 @@ public class SistemBancarService {
     }
 
     /**
-     * Matoda care se ocupa cu generarea unui extras de cont.
+     * Metoda care se ocupa cu generarea unui extras de cont.
      *
      * @param clientAutentificat Clientul care face cererea.
-     * @param ibanSelectat IBAN-ul contului țintă.
-     * @return Calea completă a fișierului generat (ex: "ExtraseCont\Extras_RO01...txt").
-     * @throws ExceptieContInexistent Dacă IBAN-ul nu e găsit.
+     * @param ibanSelectat       IBAN-ul contului țintă.
+     * @param luniInUrma         Numărul de luni în urmă pentru care se generează extrasul.
+     * @return Calea completă a fișierului text generat.
+     * @throws ExceptieContInexistent     Dacă IBAN-ul nu e găsit.
      * @throws ExceptiePermisiuneRespinsa Dacă contul nu aparține clientului.
-     * @throws IOException Dacă apare o eroare la scrierea fișierului.
+     * @throws IOException                Dacă apare o eroare la crearea/scrierea fișierului.
      */
     public String genereazaExtrasDeCont(Client clientAutentificat, String ibanSelectat, int luniInUrma)
             throws ExceptieContInexistent, ExceptiePermisiuneRespinsa, IOException {
@@ -301,7 +407,6 @@ public class SistemBancarService {
             writer.printf("%-12s | %-15s | %-15s | %-30s\n", "Data", "Tip", "Suma (" + cont.getMoneda() + ")", "Detalii");
             writer.println("----------------------------------------------------------------------");
 
-            // 6. Iterăm prin istoricul DEJA SORTAT (TreeSet)
             for (Tranzactie t : istoricTranzactii) {
                 if (dataInceput != null && t.getData().isBefore(dataInceput)) {
                     continue;
@@ -340,11 +445,13 @@ public class SistemBancarService {
 
     /**
      * Metoda generează statisticile zilnice (intrări și ieșiri) pentru ultimele N zile, pentru un cont specific.
+     * Indexul 0 al array-urilor corespunde zilei curente.
      *
      * @param ibanContSelectat IBAN-ul contului pentru care se generează statisticile.
-     * @param zileInUrma Numărul de zile pentru istoric î.
-     * @return O Map<String, double[]> unde cheile sunt "intrari" și "iesiri".
-     * @throws ExceptieContInexistent Dacă IBAN-ul nu există
+     * @param zileInUrma       Numărul de zile pentru istoric.
+     * @return O Map&lt;String, double[]&gt; unde cheia "intrari" are un vector al încasărilor zilnice,
+     * iar cheia "iesiri" are un vector al plăților zilnice.
+     * @throws ExceptieContInexistent Dacă IBAN-ul nu există.
      */
     public Map<String, double[]> genereazaStatisticiZilnice(String ibanContSelectat, int zileInUrma)
             throws ExceptieContInexistent {

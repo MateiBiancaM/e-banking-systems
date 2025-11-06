@@ -8,9 +8,11 @@ package ro.ase.proiect.exceptii;
  * @since 4.11.2025
  */
 public class ExceptieOperatiuneInvalida extends Exception {
-    public ExceptieOperatiuneInvalida() {
-    }
-
+    /**
+     * Constructor pentru exceptia de operatiune invalida esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieOperatiuneInvalida(String message) {
         super(message);
     }

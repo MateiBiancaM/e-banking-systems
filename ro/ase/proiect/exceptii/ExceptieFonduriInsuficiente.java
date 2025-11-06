@@ -7,9 +7,11 @@ package ro.ase.proiect.exceptii;
  * @since 26.10.2025
  */
 public class ExceptieFonduriInsuficiente extends Exception{
-    public ExceptieFonduriInsuficiente() {
-    }
-
+    /**
+     * Constructor pentru exceptia de fonduri insuficiente esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieFonduriInsuficiente(String message) {
         super(message);
     }

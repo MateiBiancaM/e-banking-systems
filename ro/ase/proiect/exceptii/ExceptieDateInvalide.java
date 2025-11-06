@@ -7,9 +7,11 @@ package ro.ase.proiect.exceptii;
  * @since 26.10.2025
  */
 public class ExceptieDateInvalide extends Exception{
-    public ExceptieDateInvalide() {
-    }
-
+    /**
+     * Constructor pentru exceptia de date invalide esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieDateInvalide(String message) {
         super(message);
     }

@@ -8,9 +8,11 @@ package ro.ase.proiect.exceptii;
  * @since 02.11.2025
  */
 public class ExceptieClientInexistent extends Exception{
-    public ExceptieClientInexistent() {
-    }
-
+    /**
+     * Constructor pentru exceptia de client inexistent esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieClientInexistent(String message) {
         super(message);
     }

@@ -16,25 +16,49 @@ import java.util.Map;
 import java.util.Scanner;
 
 /**
- *Clasa gestioneaza interfata cu utilizatorul in consola. Va fi preluat inputul de la utilizator, iar sarcinile vor
- * fi delegate catre SistemBancarService
+ * Clasa gestioneaza interfata cu utilizatorul in consola. Va fi preluat inputul de la utilizator, iar sarcinile vor
+ * fi delegate catre SistemBancarService.
+ * Această clasă, deși rulează în consolă pentru input-ul de date,
+ * lansează ferestre GUI pentru a afișa opțiunile și rapoartele.
  *
  * @author Matei Maria-Bianca
  * @version 1.4
  * @since 4.11.2025
  * @see SistemBancarService
+ * @see FereastraAutentificare
+ * @see FereastraGrafic
+ * @see FereastraMeniuPrincipal
+ * @see FereastraRaport
  */
 public class MeniuConsola {
+    /**
+     * Serviciul care conține logica de business a aplicației.
+     */
     private SistemBancarService sistemBancarService;
+    /**
+     * Obiectul Scanner folosit pentru a citi input-ul de la utilizator din consolă.
+     */
     private Scanner scanner;
+    /**
+     * Stochează starea clientului curent după o autentificare reușită.
+     */
     private Client clientAutentificat;
-
+    /**
+     * Constructor pentru MeniuConsola. Inițializează scannerul și injectează serviciul bancar.
+     *
+     * @param sistemBancarService Serviciul de business care va fi utilizat de meniu.
+     */
     public MeniuConsola(SistemBancarService sistemBancarService) {
         this.sistemBancarService = sistemBancarService;
         this.scanner = new Scanner(System.in);
         this.clientAutentificat=null;
     }
-
+    /**
+     * Pornește interfața cu utilizatorul.
+     * Afișează bucla de autentificare/înregistrare (folosind {@link FereastraAutentificare}).
+     * După autentificarea cu succes, apelează {@link #ruleazaMeniuPrincipal()}.
+     * Bucla continuă până când utilizatorul alege să iasă.
+     */
     public void start() {
         while (this.clientAutentificat == null) {
             FereastraAutentificare loginGui = new FereastraAutentificare(null);
@@ -64,7 +88,13 @@ public class MeniuConsola {
         System.out.println("\nAutentificare reușită ca: " + clientAutentificat.getNume());
         ruleazaMeniuPrincipal();
     }
-
+    /**
+     * Rulează bucla meniului principal după ce un client a fost autentificat.
+     * Afișează opțiunile principale folosind {@link FereastraMeniuPrincipal} și
+     * deleagă acțiunile către metodele de gestionare corespunzătoare.
+     * Gestionează și deconectarea (setând {@code clientAutentificat} la null și
+     * reapelând {@link #start()}).
+     */
     private void ruleazaMeniuPrincipal() {
         boolean ruleaza = true;
         while (ruleaza) {
@@ -120,7 +150,14 @@ public class MeniuConsola {
             }
         }
     }
-
+    /**
+     * Gestionează fluxul de autentificare.
+     * Preia numele și CNP-ul de la consolă și apelează serviciul de autentificare.
+     * Setează {@link #clientAutentificat} dacă autentificarea reușește.
+     *
+     * @throws ExceptieAutentificareEsuata dacă datele de autentificare sunt incorecte.
+     * @throws ExceptieClientInexistent    dacă clientul nu este găsit (conform semnăturii metodei).
+     */
     private void gestioneazaAutentificare() throws ExceptieAutentificareEsuata, ExceptieClientInexistent {
         System.out.print("Introduceți numele de familie: ");
         String nume = scanner.nextLine();
@@ -129,7 +166,14 @@ public class MeniuConsola {
 
         this.clientAutentificat = sistemBancarService.autentificareClient(nume, cnp);
     }
-
+    /**
+     * Gestionează fluxul de înregistrare a unui client nou.
+     * Preia numele, prenumele și CNP-ul de la consolă.
+     * Apelează serviciul de înregistrare și setează clientul nou ca {@link #clientAutentificat}.
+     *
+     * @throws ExceptieClientExistent dacă un client cu același CNP există deja.
+     * @throws ExceptieDateInvalide   dacă formatul CNP-ului este invalid.
+     */
     private void gestioneazaInregistrare() throws ExceptieClientExistent, ExceptieDateInvalide {
         System.out.print("Introduceți numele de familie: ");
         String nume = scanner.nextLine();
@@ -140,7 +184,13 @@ public class MeniuConsola {
 
         this.clientAutentificat = sistemBancarService.inregistrareClient(nume, prenume, cnp);
     }
-
+    /**
+     * Gestionează operațiunea de depunere. Citește IBAN-ul destinație și suma de la consolă.
+     *
+     * @throws ExceptieContInexistent           dacă IBAN-ul nu este găsit.
+     * @throws ExceptieLimitaDepunereDepasita   dacă suma depășește limita.
+     * @throws ExceptieOperatiuneInvalida       dacă operațiunea este invalidă.
+     */
     private void gestioneazaDepunere() throws ExceptieContInexistent, ExceptieLimitaDepunereDepasita, ExceptieOperatiuneInvalida {
         System.out.println("\tPentru anulare introduceti:-1");
         System.out.print("Introduceți IBAN-ul destinație: ");
@@ -156,7 +206,14 @@ public class MeniuConsola {
         sistemBancarService.efectueazaDepunere(iban, suma);
         System.out.println("SUCCES:Suma:"+suma+" a fost depusa in contul:"+ iban+".");
     }
-
+    /**
+     * Gestionează operațiunea de retragere.Citește IBAN-ul sursă și suma, apoi validează operațiunea pentru clientul autentificat.
+     *
+     * @throws ExceptieContInexistent           dacă IBAN-ul nu este găsit.
+     * @throws ExceptieFonduriInsuficiente      dacă fondurile sunt insuficiente.
+     * @throws ExceptieRetragereZilnicaDepasita dacă limita zilnică este depășită.
+     * @throws ExceptiePermisiuneRespinsa       dacă contul nu aparține clientului autentificat.
+     */
     private void gestioneazaRetragere() throws ExceptieContInexistent, ExceptieFonduriInsuficiente, ExceptieRetragereZilnicaDepasita, ExceptiePermisiuneRespinsa {
         System.out.println("\tPentru anulare introduceti:-1");
         System.out.print("Introduceți IBAN-ul destinație: ");
@@ -172,7 +229,17 @@ public class MeniuConsola {
         sistemBancarService.efectueazaRetragere(this.clientAutentificat,iban, suma);
         System.out.println("SUCCES:Suma:"+suma+" a fost retrasa din contul:"+ iban+".");
     }
-
+    /**
+     * Gestionează operațiunea de transfer bancar. Citește IBAN-ul sursă, destinație și suma.
+     *
+     * @throws ExceptieContInexistent           dacă unul dintre IBAN-uri nu este găsit.
+     * @throws ExceptieFonduriInsuficiente      dacă fondurile sursă sunt insuficiente.
+     * @throws ExceptieRetragereZilnicaDepasita dacă limita zilnică sursă este depășită.
+     * @throws ExceptiePermisiuneRespinsa       dacă contul sursă nu aparține clientului.
+     * @throws ExceptieLimitaDepunereDepasita   dacă suma depășește limita la destinație.
+     * @throws ExceptieTransferInvalid          dacă monedele nu corespund.
+     * @throws ExceptieOperatiuneInvalida       dacă depunerea la destinație eșuează.
+     */
     private void gestioneazaTransfer() throws ExceptieContInexistent, ExceptieFonduriInsuficiente, ExceptieRetragereZilnicaDepasita, ExceptiePermisiuneRespinsa, ExceptieLimitaDepunereDepasita, ExceptieTransferInvalid, ExceptieOperatiuneInvalida {
         System.out.println("\tPentru anulare introduceti:-1");
         System.out.print("Introduceți IBAN-ul sursă: ");
@@ -193,7 +260,11 @@ public class MeniuConsola {
         sistemBancarService.efecteazaTransfer(this.clientAutentificat,ibanSursa, ibanDestinatie, suma);
         System.out.println("SUCCES:Suma:"+suma+" a fost transferata din contul:"+ ibanSursa+", catre contul:"+ ibanDestinatie+".");
     }
-
+    /**
+     * Afișează la consolă detaliile tuturor conturilor deținute de clientul autentificat.
+     *
+     * @throws ExceptieClientInexistent dacă ID-ul clientului autentificat nu este găsit.
+     */
     private void gestioneazaAfisareConturiClient() throws ExceptieClientInexistent {
         String clientId = this.clientAutentificat.getClientId();
         List<Cont> conturiClient = sistemBancarService.getConturiByClientId(clientId);
@@ -218,7 +289,10 @@ public class MeniuConsola {
             }
         }
     }
-
+    /**
+     * Gestionează fluxul de creare a unui cont nou (DEBIT sau CREDIT) pentru clientul autentificat.
+     * Preia tipul contului și moneda de la utilizator.
+     */
     private void gestioneazaDeschidereCont(){
         System.out.println("Deschidere cont nou");
         System.out.println("Ce tip de cont doriti sa deschideti?");
@@ -264,7 +338,14 @@ public class MeniuConsola {
         }
         sistemBancarService.creazaContNou(this.clientAutentificat,tipCont,tipMoneda);
     }
-
+    /**
+     * Gestionează generarea raportului de activitate. Permite clientului să aleagă un cont,
+     * apoi lansează {@link FereastraRaport} cu statisticile corespunzătoare.
+     *
+     * @throws ExceptieClientInexistent     dacă clientul nu este găsit.
+     * @throws ExceptieContInexistent       dacă contul selectat nu este găsit.
+     * @throws ExceptiePermisiuneRespinsa   dacă contul nu aparține clientului.
+     */
     private void gestioneazaRaportActivitate() throws ExceptieClientInexistent, ExceptieContInexistent, ExceptiePermisiuneRespinsa {
         List<Cont> conturileMele=sistemBancarService.getConturiByClientId(this.clientAutentificat.getClientId());
         if(conturileMele.isEmpty()){
@@ -289,7 +370,11 @@ public class MeniuConsola {
         double[][] statistici= sistemBancarService.genereazaStatisticiContClient(this.clientAutentificat,ibanSelectat);
         new FereastraRaport(statistici,clientAutentificat.getNume(),clientAutentificat.getPrenume(),contSelectat);
     }
-
+    /**
+     * Metodă utilitară pentru a citi un număr întreg (opțiune de meniu) de la consolă.
+     *
+     * @return Opțiunea numerică citită, sau -1 în caz de input invalid.
+     */
     private int citesteOptiune() {
         try {
             int optiune = scanner.nextInt();
@@ -301,7 +386,13 @@ public class MeniuConsola {
             return -1;
         }
     }
-
+    /**
+     * Metodă utilitară pentru a citi o sumă (double) validă de la consolă.
+     * Rulează într-o buclă până când utilizatorul introduce o valoare numerică pozitivă
+     * sau -1 pentru a anula.
+     *
+     * @return Suma validă citită, sau -1.0 dacă operațiunea este anulată.
+     */
     private double citesteSuma() {
         while (true) {
             System.out.println("Introduceti suma dorita:");
@@ -322,7 +413,16 @@ public class MeniuConsola {
             }
         }
     }
-
+    /**
+     * Gestionează fluxul de generare a unui extras de cont în fișier text.
+     * Permite utilizatorului să selecteze contul și perioada (3 luni, 6 luni, complet).
+     * Afișează calea fișierului generat.
+     *
+     * @throws ExceptieClientInexistent     dacă clientul nu este găsit.
+     * @throws ExceptieContInexistent       dacă contul selectat nu este găsit.
+     * @throws ExceptiePermisiuneRespinsa   dacă contul nu aparține clientului.
+     * @throws IOException                dacă apare o eroare la scrierea fișierului extras.
+     */
     private void gestioneazaExtrasDeCont()
             throws ExceptieClientInexistent, ExceptieContInexistent, ExceptiePermisiuneRespinsa, IOException {
 
@@ -378,8 +478,13 @@ public class MeniuConsola {
     }
 
     /**
-     * NOU/MODIFICAT: Gestionează lansarea ferestrei cu graficul fluxului financiar zilnic,
-     * după ce utilizatorul selectează un cont.
+     * Gestionează lansarea ferestrei cu graficul fluxului financiar zilnic.
+     * Permite utilizatorului să selecteze un cont și lansează {@link FereastraGrafic}
+     * pentru ultimele 30 de zile.
+     *
+     * @throws ExceptieClientInexistent     dacă clientul nu este găsit.
+     * @throws ExceptieContInexistent       dacă contul selectat nu este găsit.
+     * @throws ExceptiePermisiuneRespinsa   dacă serviciul detectează o problemă de permisiune
      */
     private void gestioneazaGraficFluxFinanciar()
             throws ExceptieClientInexistent, ExceptieContInexistent, ExceptiePermisiuneRespinsa {

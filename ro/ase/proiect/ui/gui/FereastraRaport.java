@@ -7,16 +7,34 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 /**
- * Fereastra grafica pentru afisarea raportului de activitate a clientului sub forma de tabel.
+ * Fereastra grafica (JFrame) pentru afisarea raportului de activitate a clientului sub forma de tabel.
  *
  * @author Matei Maria-Bianca
  * @version 1.1
  * @since 4.11.2025
  */
 public class FereastraRaport extends JFrame {
+    /**
+     * Tabelul Swing care afișează datele statistice.
+     */
     private JTable tabelStatistici;
+
+    /**
+     * Containerul cu bare de derulare pentru tabel, în cazul în care conținutul este prea mare.
+     */
     private JScrollPane scrollPane;
 
+    /**
+     * Constructor pentru fereastra de raport.
+     * Inițializează și configurează fereastra, creează modelul de tabel
+     * pe baza statisticilor primite și afișează fereastra.
+     *
+     * @param statistici     Matricea double[4][2] care conține datele (Suma, Număr)
+     *                          pentru (Depuneri, Retrageri, Trimise, Primite).
+     * @param numeClient     Numele clientului (pentru titlu).
+     * @param prenumeClient  Prenumele clientului (pentru titlu).
+     * @param contSelectat   Obiectul Cont pentru care se generează raportul (pentru IBAN și monedă).
+     */
     public FereastraRaport(double[][] statistici, String numeClient, String prenumeClient, Cont contSelectat) {
         setTitle("Raport activitate pentru:"+ numeClient+" "+prenumeClient+" -> Cont selectat:"+contSelectat.getIban());
         setSize(600,200);

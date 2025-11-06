@@ -7,9 +7,11 @@ package ro.ase.proiect.exceptii;
  * @since 27.10.2025
  */
 public class ExceptieRetragereZilnicaDepasita extends Exception{
-    public ExceptieRetragereZilnicaDepasita() {
-    }
-
+    /**
+     * Constructor pentru exceptia de retragere zilnica depasita esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieRetragereZilnicaDepasita(String message) {
         super(message);
     }

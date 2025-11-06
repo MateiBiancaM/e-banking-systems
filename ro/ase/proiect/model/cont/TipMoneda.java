@@ -8,5 +8,18 @@ package ro.ase.proiect.model.cont;
  * @since 26.10.2025
  */
 public enum TipMoneda {
-    RON, EUR, USD
+    /**
+     * Leul românesc.
+     */
+    RON,
+
+    /**
+     * Moneda Euro.
+     */
+    EUR,
+
+    /**
+     * Dolarul american.
+     */
+    USD
 }

@@ -8,9 +8,11 @@ package ro.ase.proiect.exceptii;
  * @since 02.11.2025
  */
 public class ExceptieAutentificareEsuata extends Exception{
-    public ExceptieAutentificareEsuata() {
-    }
-
+    /**
+     * Constructor pentru exceptia de autentificare esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieAutentificareEsuata(String message) {
         super(message);
     }

@@ -7,5 +7,12 @@ package ro.ase.proiect.model.cont;
  * @since 3.11.2025
  */
 public enum TipCont {
-    DEBIT, CREDIT
+    /**
+     * Reprezintă un cont de tip Debitor ({@link ContDebitor}). Fondurile sunt deținute de client.
+     */
+    DEBIT,
+    /**
+     * Reprezintă un cont de tip Creditor ({@link ContCreditor}). Fondurile reprezintă o linie de credit (datorie) a clientului față de bancă.
+     */
+    CREDIT
 }

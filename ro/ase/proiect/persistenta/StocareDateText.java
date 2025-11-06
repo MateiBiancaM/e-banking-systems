@@ -23,16 +23,33 @@ public class StocareDateText implements StocareDate{
     private String caleFisierClienti;
     private String caleFisierConturi;
     private String caleFisierTranzactii;
-
+    /**
+     * Delimitatorul folosit pentru separarea coloanelor in fisierele text.
+     */
     private static final String DELIMITATOR=";";
+    /**
+     * Reprezentarea textuala a unei valori 'null' in fisiere.
+     */
     private static final String VALOARE_NULL="null";
-
+    /**
+     * Constructor pentru StocareDateText.Inițializează căile către fișierele de stocare.
+     *
+     * @param caleFisierClienti    Calea către fișierul de clienți.
+     * @param caleFisierConturi    Calea către fișierul de conturi.
+     * @param caleFisierTranzactii Calea către fișierul de tranzacții.
+     */
     public StocareDateText(String caleFisierClienti, String caleFisierConturi, String caleFisierTranzactii) {
         this.caleFisierClienti = caleFisierClienti;
         this.caleFisierConturi = caleFisierConturi;
         this.caleFisierTranzactii = caleFisierTranzactii;
     }
-
+    /**
+     * Implementarea încarcă clienții din fișierul text specificat.
+     * Formatul așteptat per linie: {@code clientId;nume;prenume;cnp}
+     *
+     * @return O hartă cu clienții încărcați, având ca cheie ID-ul clientului.
+     * @throws ExceptieDateInvalide dacă o linie are un format incorect.
+     */
     @Override
     public Map<String, Client> incarcaClienti() throws ExceptieDateInvalide {
         Map<String, Client> clientiIncarcati = new HashMap<>();
@@ -57,7 +74,22 @@ public class StocareDateText implements StocareDate{
         }
         return clientiIncarcati;
     }
-
+    /**
+     * Implementarea încarcă conturile din fișierul text. Utilizează clientii existenti pentru a asocia conturile.
+     * <p>
+     * Formatele așteptate per linie sunt:
+     * <ul>
+     * <li><b>CREDIT:</b> {@code CREDIT;iban;clientId;moneda;sold;limitaCredit}</li>
+     * <li><b>DEBIT:</b> {@code DEBIT;iban;clientId;moneda;sold;totalRetrasAstazi;dataUltimeiRetrageri}</li>
+     * </ul>
+     * <p>
+     * La încărcarea conturilor DEBIT, starea retragerii zilnice este resetată dacă data salvată
+     * nu corespunde zilei curente.
+     *
+     * @param clientiExistenti Harta clienților existenți, necesară pentru a lega conturile de deținători.
+     * @return O hartă cu conturile încărcate, având ca cheie IBAN-ul.
+     * @throws ExceptieDateInvalide dacă datele sunt corupte.
+     */
     @Override
     public Map<String, Cont> incarcaConturi(Map<String, Client> clientiExistenti) throws ExceptieDateInvalide {
         Map<String, Cont> conturiIncarcate = new HashMap<>();
@@ -132,7 +164,15 @@ public class StocareDateText implements StocareDate{
         }
         return conturiIncarcate;
     }
-
+    /**
+     * Implementarea încarcă tranzacțiile din fișierul text.
+     * Datele sunt încărcate într-un {@link TreeSet} și sortate.
+     * <p>
+     * Formatul așteptat per linie:{@code idTranzactie;data;tip;suma;ibanSursa;ibanDestinatie}
+     *
+     * @return Un set sortat (TreeSet) de tranzacții.
+     * @throws ExceptieDateInvalide dacă datele sunt corupte.
+     */
     @Override
     public Set<Tranzactie> incarcaTranzactii() throws ExceptieDateInvalide {
         Set<Tranzactie> tranzactiiIncarcate = new TreeSet<>();
@@ -163,7 +203,12 @@ public class StocareDateText implements StocareDate{
         }
         return tranzactiiIncarcate;
     }
-
+    /**
+     * Salvează clienții în fișierul text, suprascriind conținutul existent.
+     * Formatul de scriere: {@code clientId;nume;prenume;cnp}
+     *
+     * @param clienti Harta clienților (ID -> Client) care trebuie salvată.
+     */
     @Override
     public void salveazaClienti(Map<String, Client> clienti) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(caleFisierClienti))) {
@@ -180,7 +225,14 @@ public class StocareDateText implements StocareDate{
             System.err.println("Eroare scriere in " + caleFisierClienti + ": " + e.getMessage());
         }
     }
-
+    /**
+     * {@inheritDoc}
+     * Salvează conturile în fișierul text, suprascriind conținutul existent.
+     * Detectează tipul contului și salvează datele în formatul
+     * corespunzător (CREDIT sau DEBIT), incluzând starea specifică.
+     *
+     * @param conturi Harta conturilor (IBAN -> Cont) care trebuie salvată.
+     */
     @Override
     public void salveazaConturi(Map<String, Cont> conturi) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(caleFisierConturi))) {
@@ -221,7 +273,11 @@ public class StocareDateText implements StocareDate{
             System.err.println("Eroare scriere in: " + caleFisierConturi + ": " + e.getMessage());
         }
     }
-
+    /**
+     * Salvează tranzacțiile în fișierul text, suprascriind conținutul existent.
+     *
+     * @param tranzactii Setul de tranzacții care trebuie salvat.
+     */
     @Override
     public void salveazaTranzactii(Set<Tranzactie> tranzactii) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(caleFisierTranzactii))) {

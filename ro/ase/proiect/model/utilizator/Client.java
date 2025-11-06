@@ -11,7 +11,14 @@ public class Client {
     private String nume;
     private String prenume;
     private String cnp;
-
+    /**
+     * Constructor pentru clasa Client.Inițializează un client cu datele sale de identificare.
+     *
+     * @param clientId ID-ul unic al clientului.
+     * @param nume     Numele de familie al clientului.
+     * @param prenume  Prenumele clientului.
+     * @param cnp      Codul Numeric Personal (CNP) al clientului.
+     */
     public Client(String clientId, String nume, String prenume, String cnp) {
         this.clientId = clientId;
         this.nume = nume;
@@ -19,35 +26,40 @@ public class Client {
         this.cnp = cnp;
     }
 
+    /**
+     * Returnează ID-ul unic al clientului.
+     *
+     * @return ID-ul clientului (String).
+     */
     public String getClientId() {
         return clientId;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
+    /**
+     * Returnează numele de familie al clientului.
+     *
+     * @return Numele clientului (String).
+     */
     public String getNume() {
         return nume;
     }
 
-    public void setNume(String nume) {
-        this.nume = nume;
-    }
-
+    /**
+     * Returnează prenumele clientului.
+     *
+     * @return Prenumele clientului (String).
+     */
     public String getPrenume() {
         return prenume;
     }
 
-    public void setPrenume(String prenume) {
-        this.prenume = prenume;
-    }
-
+    /**
+     * Returnează CNP-ul al clientului.
+     *
+     * @return CNP-ul clientului (String).
+     */
     public String getCnp() {
         return cnp;
     }
 
-    public void setCnp(String cnp) {
-        this.cnp = cnp;
-    }
 }

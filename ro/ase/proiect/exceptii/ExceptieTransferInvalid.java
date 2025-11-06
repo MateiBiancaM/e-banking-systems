@@ -7,9 +7,11 @@ package ro.ase.proiect.exceptii;
  * @since 4.11.2025
  */
 public class ExceptieTransferInvalid extends Exception {
-    public ExceptieTransferInvalid() {
-    }
-
+    /**
+     * Constructor pentru exceptia de transfer invalid esuata.
+     *
+     * @param message Mesajul de eroare care descrie motivul esecului.
+     */
     public ExceptieTransferInvalid(String message) {
         super(message);
     }
